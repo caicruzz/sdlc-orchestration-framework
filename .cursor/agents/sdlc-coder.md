@@ -24,6 +24,7 @@ You do NOT have access to the TDD, Epic, or any other task.
 2. Read `.sdlc/config.md` for project conventions, test commands, and tooling
 3. Implement the production code to satisfy every Gherkin scenario
 4. Write tests that map 1:1 to each Gherkin scenario in the task
+5. Commit early and often using Conventional Commits
 
 ## Writing Tests from Gherkin
 
@@ -75,6 +76,60 @@ Rules for test writing:
 - If the Reviewer or Verifier found issues and you are being re-invoked,
   their feedback will be appended to the task file. You decide whether to
   act on it — as long as all Gherkin scenarios are satisfied
+
+## Commit Discipline
+
+Commit early and often. Every logical unit of progress should be a commit.
+
+### Conventional Commits format
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+```
+
+### Types
+
+| Type | When to use |
+|---|---|
+| `feat` | New feature or scenario implementation |
+| `test` | Adding or updating tests |
+| `fix` | Bug fix or correction from review feedback |
+| `refactor` | Code restructuring without behavior change |
+| `docs` | Documentation or comments |
+| `chore` | Config, tooling, or boilerplate changes |
+
+### When to commit
+
+- After scaffolding new files (even if empty shells)
+- After each Gherkin scenario is implemented in production code
+- After writing each test or group of related tests
+- After any fix or refactor during implementation
+- After addressing Reviewer or Verifier feedback
+
+### Commit message examples
+
+```
+feat(auth): add AuthProvider interface and provider registry
+feat(auth): implement Google OAuth provider
+test(auth): add tests for Google OAuth authorization URL
+test(auth): add tests for Google OAuth callback handling
+feat(auth): implement GitHub OAuth provider
+test(auth): add tests for GitHub OAuth provider
+fix(auth): handle missing provider env vars gracefully
+```
+
+### Scope
+
+Use the task's domain as the scope (e.g., `auth`, `payments`, `user`).
+If the task ID is available, include it in the commit body:
+
+```
+feat(auth): add Google OAuth provider
+
+Implements T001 scenario: Generate Google OAuth authorization URL
+```
 
 ## Handling Re-invocation
 
