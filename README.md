@@ -322,6 +322,110 @@ Four mandatory human checkpoints in every workflow:
 
 The workflow rule in `.cursor/rules/sdlc-workflow.mdc` prevents the agent from proceeding past these gates without explicit human approval.
 
+## Installation Scopes
+
+Cursor supports two scopes for agents and rules: **project-level** and **user-level**.
+
+### Project-Level (per repo)
+
+This is what the Quick Start section covers. Agents and config live inside the project:
+
+```
+your-project/
+  .cursor/
+    agents/           ← project-scoped agents
+    rules/            ← project-scoped rules
+  .sdlc/
+    config.md         ← project-specific config
+    templates/        ← project-specific templates
+```
+
+Use this when:
+- The project has specific conventions, test frameworks, or architecture patterns
+- You want the framework checked into version control for the whole team
+- Templates need to be customized for the project's domain
+
+### User-Level (global, all projects)
+
+Agents and rules can also be installed globally so they're available in **every** project without copying files:
+
+```
+~/.cursor/
+  agents/              ← user-scoped agents (all projects)
+    sdlc-architect.md
+    sdlc-evaluator.md
+    sdlc-planner.md
+    sdlc-coder.md
+    sdlc-reviewer.md
+    sdlc-verifier.md
+```
+
+Cursor also reads from Claude and Codex compatibility paths:
+- `~/.claude/agents/`
+- `~/.codex/agents/`
+
+Use this when:
+- You want the SDLC agents available in every repo without setup
+- You work across many projects and don't want to copy agents each time
+- You have personal preferences for agent behavior that apply everywhere
+
+#### Setting up global agents
+
+```bash
+# Copy agents to your user-level config
+cp .cursor/agents/*.md ~/.cursor/agents/
+
+# Or link them to keep in sync with this repo
+ln -s $(pwd)/.cursor/agents/*.md ~/.cursor/agents/
+```
+
+#### Global agents + project config
+
+The most effective setup combines both scopes:
+
+| Scope | What to install | Why |
+|---|---|---|
+| **User-level** (`~/.cursor/agents/`) | All 6 agents | Available everywhere, no per-project copy |
+| **User-level** (`~/.cursor/rules/`) | Workflow rule | Enforces the SDLC process in every project |
+| **Project-level** (`.sdlc/`) | `config.md` + templates | Project-specific stack, commands, and output formats |
+
+Agents are global (same behavior everywhere), but `config.md` and templates are project-local (different test commands, different TDD sections per project). This is the intended design — the agents read `.sdlc/config.md` from the project root at runtime, so they adapt to whatever project they're invoked in.
+
+#### Precedence rules
+
+When the same agent name exists in multiple locations, Cursor resolves conflicts:
+
+1. `.cursor/agents/` — **highest priority** (project-level)
+2. `~/.cursor/agents/` — user-level fallback
+3. `.claude/agents/` / `.codex/agents/` — compatibility fallback
+
+This means you can install agents globally but override a specific agent per-project by placing a file with the same name in the project's `.cursor/agents/` directory.
+
+### Recommended Setup
+
+**For individual developers** — install agents + workflow rule globally, add `.sdlc/` per project:
+
+```bash
+# One-time global setup
+mkdir -p ~/.cursor/agents ~/.cursor/rules
+cp .cursor/agents/*.md ~/.cursor/agents/
+cp .cursor/rules/sdlc-workflow.mdc ~/.cursor/rules/
+
+# Per project: just add the config and templates
+cp -r .sdlc/ /path/to/your/project/.sdlc/
+# Then edit .sdlc/config.md for that project's stack
+```
+
+**For teams** — install everything at project level and check into version control:
+
+```bash
+cp -r .cursor/ /path/to/your/project/.cursor/
+cp -r .sdlc/ /path/to/your/project/.sdlc/
+# Edit .sdlc/config.md, commit, push
+```
+
+Everyone on the team gets the same agents, templates, and config from `git pull`.
+
 ## Customizing for Your Project
 
 ### Stack Configuration
@@ -348,7 +452,7 @@ Templates in `.sdlc/templates/` define the output format. Modify them to:
 
 ### Adding New Agents
 
-Create a new `.md` file in `.cursor/agents/`:
+Create a new `.md` file in `.cursor/agents/` (project) or `~/.cursor/agents/` (global):
 
 ```markdown
 ---
