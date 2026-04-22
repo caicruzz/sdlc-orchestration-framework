@@ -5,49 +5,65 @@ An agent-driven SDLC framework for [Cursor](https://cursor.com). Define features
 ## How It Works
 
 ```
-Requirements ──▶ [Architect] ──▶ TDD
-                                     │
-                   [Planner] ← reads TDD only
-                        │
+Path A: No TDD exists             Path B: TDD already exists
+
+Requirements                      Existing TDD
+     │                                 │
+     ▼                                 │
+ [Architect]                            │
+  generates TDD                         │
+     │                                  │
+     └──────────────┬───────────────────┘
+                    ▼
+            [Evaluator]  ← red teams the TDD
+                    │
+                    ▼
+            Human gate: review evaluation
+                    │
+                    ▼
+                   [Planner]
+                         │
                    creates self-contained tasks with Gherkin scenarios
-                        │
-             ┌──────────┼──────────┐
-             ▼          ▼          ▼
-         [Coder]    [Coder]    [Coder]     ← each reads ONE task only
-             │          │          │
-         implements + writes tests from Gherkin
-             │          │          │
-             └──────────┼──────────┘
-                        │
-                   ┌────┴────┐  ← parallel fork
-                   ▼         ▼
-            [Reviewer]  [Verifier]
-            code quality  tests/lint/build
-                   │         │
-                both pass?───┘
-                   │
-              ┌────┴────┐
-           No ─┤         ├── Yes
-              back to    Human sign-off
-              Coder           │
-                           Done
+                         │
+              ┌──────────┼──────────┐
+              ▼          ▼          ▼
+          [Coder]    [Coder]    [Coder]     ← each reads ONE task only
+              │          │          │
+          implements + writes tests from Gherkin
+              │          │          │
+              └──────────┼──────────┘
+                         │
+                    ┌────┴────┐  ← parallel fork
+                    ▼         ▼
+             [Reviewer]  [Verifier]
+             code quality  tests/lint/build
+                    │         │
+                 both pass?───┘
+                    │
+               ┌────┴────┐
+            No ─┤         ├── Yes
+               back to    Human sign-off
+               Coder           │
+                            Done
 ```
 
 ## Agents
 
-| Agent | Role | Reads | Writes | Model |
-|---|---|---|---|---|
-| **Architect** | Produces Technical Design Document from requirements | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md` | inherit |
-| **Planner** | Decomposes TDD into self-contained Gherkin-based tasks | TDD only | Tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit |
-| **Coder** | Implements task + writes tests from Gherkin scenarios | ONE task + config | Production code + tests | inherit |
-| **Reviewer** | Reviews code quality, bugs, scenario coverage | ONE task + code diff | Review report | inherit |
-| **Verifier** | Runs tests, lint, typecheck, build mechanically | Config only | Verification report | fast |
+| Agent | Role | Reads | Writes | Model | Readonly |
+|---|---|---|---|---|---|
+| **Architect** | Produces Technical Design Document from requirements | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md` | inherit | no |
+| **Evaluator** | Critically evaluates TDDs — finds flaws, blind spots, trade-offs | TDD + codebase exploration | Returns critique as text (main agent persists) | inherit | yes |
+| **Planner** | Decomposes TDD into self-contained Gherkin-based tasks | TDD only | Tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no |
+| **Coder** | Implements task + writes tests from Gherkin scenarios | ONE task + config | Production code + tests | inherit | no |
+| **Reviewer** | Reviews code quality, bugs, scenario coverage | ONE task + code diff | Review report | inherit | yes |
+| **Verifier** | Runs tests, lint, typecheck, build mechanically | Config only | Verification report | fast | yes |
 
 ### Context Isolation
 
 Each agent operates with strict context boundaries:
 
 - **Architect** → reads requirements and codebase, writes TDD
+- **Evaluator** → reads TDD and codebase, returns critique, never edits files
 - **Planner** → reads TDD only, writes self-contained tasks
 - **Coder** → reads ONE task file only, never sees TDD or other tasks
 - **Reviewer** → reads ONE task + code changes, never edits code
@@ -62,6 +78,18 @@ Tasks use BDD-style Gherkin scenarios that serve triple duty:
 1. **Coder** — writes tests that map 1:1 to each scenario
 2. **Reviewer** — checks if implementation satisfies each scenario's intent
 3. **Verifier** — mechanically runs the tests the Coder wrote from those scenarios
+
+### The Evaluator — Your Intellectual Sparring Partner
+
+The Evaluator is not a rubber stamp. It operates under five strict rules:
+
+1. **90% Alignment First** — If the business goals or success metrics are fuzzy, it stops and asks foundational questions before critiquing the architecture
+2. **Assume Flaws** — Actively searches for bottlenecks, security vulnerabilities, scalability limits, and maintainability nightmares
+3. **Evaluate Trade-offs** — Every decision has a cost. If the TDD doesn't mention trade-offs, the Evaluator calls them out
+4. **Propose Alternatives** — For every weakness found, suggests at least one alternative approach
+5. **Demand Clarity** — Calls out vagueness in data modeling, API contracts, error handling, state management, security, and observability
+
+The Evaluator returns a structured report with: Alignment Check, Executive Summary, Critical Vulnerabilities & Blind Spots, Trade-off Analysis, Alternative Approaches, Hard Questions, and a Verdict (ready-for-planning / needs-revision / blocked).
 
 ## Quick Start
 
@@ -94,23 +122,43 @@ Edit `.sdlc/config.md` to match your tech stack:
 
 ### 3. Start a feature
 
-In Cursor's agent chat:
+**Path A — Generate a new TDD:**
 
 ```
 /sdlc-architect Create a TDD for adding OAuth2 login with Google and GitHub
+```
+
+**Path B — Evaluate an existing TDD:**
+
+```
+/sdlc-evaluator Evaluate the TDD at .sdlc/projects/oauth2/00-tdd.md
 ```
 
 ## Workflow
 
 ### Phase 1: Design
 
+#### Path A: Generate TDD
+
 ```
 > /sdlc-architect Create a TDD for <feature description>
 ```
 
-The Architect explores your codebase and writes a Technical Design Document to `.sdlc/projects/<slug>/00-tdd.md`.
+The Architect explores your codebase and writes a TDD to `.sdlc/projects/<slug>/00-tdd.md`.
 
-**Human gate: Review and approve the TDD.**
+#### Path B: Bring your own TDD
+
+Place your existing TDD at `.sdlc/projects/<slug>/00-tdd.md`.
+
+#### Both paths: Evaluate
+
+```
+> /sdlc-evaluator Evaluate .sdlc/projects/<slug>/00-tdd.md
+```
+
+The Evaluator critically examines the TDD, validates claims against the codebase, and returns a structured critique. If the verdict is `needs-revision`, the human revises the TDD and the Evaluator is re-invoked.
+
+**Human gate: Review the evaluation and approve the TDD.**
 
 ### Phase 2: Planning
 
@@ -157,6 +205,7 @@ After all tasks pass review and verification, the feature is ready for final hum
 .cursor/
   agents/                          # Agent definitions
     sdlc-architect.md
+    sdlc-evaluator.md              # TDD red team
     sdlc-planner.md
     sdlc-coder.md
     sdlc-reviewer.md
@@ -167,12 +216,15 @@ After all tasks pass review and verification, the feature is ready for final hum
   config.md                        # Project-specific configuration
   templates/                       # Output format templates
     tdd.md
+    evaluation.md                  # Evaluator report template
     task.md
     review.md
     verify.md
   projects/                        # Generated artifacts (gitignored)
     <slug>/
       00-tdd.md
+      evaluations/
+        00-tdd-evaluation.md       # Evaluator report (persisted by main agent)
       01-epic.md
       tasks/
         T001-<slug>.md
@@ -183,11 +235,23 @@ After all tasks pass review and verification, the feature is ready for final hum
   examples/                        # Example artifacts for reference
     oauth2/
       00-tdd.md
+      evaluations/
+        00-tdd-evaluation.md       # Example evaluation
       tasks/
         T001-add-oauth-providers.md
 ```
 
 ## Important Implementation Details
+
+### Two Entry Paths
+
+The framework supports two starting points:
+
+**Path A** — No TDD exists. The Architect generates one from requirements, then the Evaluator critiques it. This is the full agent-driven path.
+
+**Path B** — A TDD already exists (written by a human, by another tool, or from a previous session). Skip directly to the Evaluator.
+
+Both paths converge at the Evaluator. No TDD reaches the Planner without being stress-tested. This prevents garbage-in-garbage-out — whether the TDD came from the Architect, a human, or ChatGPT, it gets the same adversarial review.
 
 ### Task Status Lifecycle
 
@@ -249,11 +313,12 @@ This is by design. The Planner's Gherkin scenarios are the contract. Everything 
 
 ### Human Gates
 
-Three mandatory human checkpoints in every workflow:
+Four mandatory human checkpoints in every workflow:
 
-1. **TDD Approval** — Review `.sdlc/projects/<slug>/00-tdd.md` for architectural soundness
+1. **TDD Evaluation** — Review the Evaluator's critique and decide whether the TDD is ready for planning
 2. **Task Plan Approval** — Review the task decomposition for scope and ordering
 3. **Task Sign-off** — Review the review report + verification results before marking done
+4. **Final Merge** — Review the complete feature before merging
 
 The workflow rule in `.cursor/rules/sdlc-workflow.mdc` prevents the agent from proceeding past these gates without explicit human approval.
 
@@ -270,6 +335,7 @@ Each agent in `.cursor/agents/` is a plain Markdown file. Edit them to:
 - Add project-specific rules to the Coder (e.g., "always use repository pattern")
 - Adjust Reviewer severity thresholds
 - Add domain-specific checklists to the Architect
+- Tweak the Evaluator's adversarial tone or focus areas
 
 ### Templates
 
@@ -278,6 +344,7 @@ Templates in `.sdlc/templates/` define the output format. Modify them to:
 - Add sections specific to your domain (e.g., compliance, accessibility)
 - Change the review severity levels
 - Add required fields to the TDD
+- Adjust the Evaluator's output structure
 
 ### Adding New Agents
 
@@ -310,6 +377,12 @@ The task template is the linchpin of the framework. A well-written task:
 
 The `examples/oauth2/tasks/T001-add-oauth-providers.md` file demonstrates a fully populated task.
 
+### `.sdlc/templates/evaluation.md` — The Evaluator's Output Format
+
+The evaluation template structures the Evaluator's critique into: Alignment Check, Executive Summary, Critical Vulnerabilities & Blind Spots, Trade-off Analysis, Alternative Approaches, Hard Questions, and a Verdict.
+
+The `examples/oauth2/evaluations/00-tdd-evaluation.md` file demonstrates a full evaluation showing how the Evaluator critiques a real TDD.
+
 ### `.sdlc/config.md` — Project Configuration
 
 The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set.
@@ -317,6 +390,8 @@ The Verifier reads command configurations from here. If a command is missing or 
 ### `.cursor/rules/sdlc-workflow.mdc` — Workflow Enforcement
 
 This Cursor rule file instructs the main Cursor agent on the SDLC process. It enforces:
+- Two entry paths (generate TDD vs. bring your own)
+- Mandatory Evaluator step before planning
 - The fork-join Review + Verify loop
 - Human gate requirements
 - Context isolation between agents
