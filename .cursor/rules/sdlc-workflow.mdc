@@ -1,0 +1,62 @@
+---
+description: SDLC workflow rules for agent-driven development. Enforces the implement-review-verify loop and human gates.
+globs:
+alwaysApply: true
+---
+
+## SDLC Workflow
+
+This project uses an agent-driven SDLC process. Follow these rules when working on features.
+
+### Phase 1: Design — Architect
+
+1. Invoke `/sdlc-architect` with the feature request or requirements document
+2. The Architect explores the codebase and writes a TDD to `.sdlc/projects/<slug>/00-tdd.md`
+3. **HUMAN GATE: Wait for explicit human approval of the TDD before proceeding**
+
+### Phase 2: Planning — Planner
+
+4. Invoke `/sdlc-planner` with the path to the approved TDD
+5. The Planner reads the TDD and creates self-contained tasks with Gherkin scenarios
+6. Tasks are written to `.sdlc/projects/<slug>/tasks/T<id>-<slug>.md`
+7. An epic overview is written to `.sdlc/projects/<slug>/01-epic.md`
+8. **HUMAN GATE: Wait for explicit human approval of the task plan before proceeding**
+
+### Phase 3: Implementation Loop — Coder + Reviewer + Verifier
+
+For each task (respect dependency ordering from the epic):
+
+#### Step A: Implement
+9. Invoke `/sdlc-coder` with the task file path
+10. The Coder reads the task + config, implements the code, writes tests from Gherkin scenarios
+11. The Coder updates the task status to `implemented`
+
+#### Step B: Review and Verify (parallel)
+12. Launch IN PARALLEL:
+    - `/sdlc-reviewer` with the task file path — checks code quality, bugs, scenario coverage
+    - `/sdlc-verifier` with the task ID — runs tests, lint, typecheck, build
+
+#### Step C: Evaluate results
+13. Check results from both agents:
+    - If Reviewer verdict is `revisions-needed` → append feedback to task file, go to Step A
+    - If Verifier verdict is `fail` → append output to task file, go to Step A
+    - If BOTH pass → proceed to Step D
+
+#### Step D: Human sign-off
+14. **HUMAN GATE: Present review + verification results. Wait for explicit human approval**
+15. Mark task status as `done`
+
+### Phase 4: Completion
+
+16. After all tasks are done, present a summary to the human for final review
+
+### Strict Rules
+
+- NEVER skip the parallel Review + Verify step (Step B)
+- NEVER proceed past a human gate without explicit human approval
+- NEVER share TDD context with the Coder — only the task file
+- NEVER share task context with the Verifier — only config.md
+- NEVER let the Reviewer edit code — only the Coder implements changes
+- The Coder has autonomy on implementation approach and on whether to address Reviewer feedback
+- The Coder MUST satisfy all Gherkin scenarios regardless of Reviewer feedback decisions
+- If the Coder is re-invoked after a failed review/verify cycle, the feedback is appended to the task file — do NOT remove previous feedback
