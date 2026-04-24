@@ -37,7 +37,13 @@ There are two entry paths depending on whether a TDD already exists:
 8. Invoke `/sdlc-planner` with the path to the approved TDD
 9. The Planner reads the TDD and creates self-contained tasks with Gherkin scenarios
 10. Tasks are written to `.sdlc/projects/<slug>/tasks/T<id>-<slug>.md`
-11. An epic overview is written to `.sdlc/projects/<slug>/01-epic.md`
+11. An epic overview is written to `.sdlc/projects/<slug>/01-epic.md` using
+    `.sdlc/templates/epic.md`; it **must** include a **`## Task dependency graph`**
+    section with a valid fenced **Mermaid** `flowchart` of all tasks. When the
+    DAG has parallel dependency streams, **color-code** each stream with
+    `classDef` / `class`, use a **neutral** style for merge/join tasks, and add
+    a **legend** under the diagram; for a single linear chain or no meaningful
+    parallelism, one default node style is enough.
 12. **HUMAN GATE: Wait for explicit human approval of the task plan before proceeding**
 
 ### Phase 3: Implementation Loop — Coder + Reviewer + Verifier

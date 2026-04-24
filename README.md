@@ -53,7 +53,7 @@ Requirements                      Existing TDD
 |---|---|---|---|---|---|
 | **Architect** | Produces Technical Design Document from requirements | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md` | inherit | no |
 | **Evaluator** | Critically evaluates TDDs — finds flaws, blind spots, trade-offs | TDD + codebase exploration | Returns critique as text (main agent persists) | inherit | yes |
-| **Planner** | Decomposes TDD into self-contained Gherkin-based tasks | TDD only | Tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no |
+| **Planner** | Decomposes TDD into self-contained Gherkin-based tasks | TDD only | Epic at `01-epic.md` + tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no |
 | **Coder** | Implements task + writes tests from Gherkin scenarios | ONE task + config | Production code + tests | inherit | no |
 | **Reviewer** | Reviews code quality, bugs, scenario coverage | ONE task + code diff | Review report | inherit | yes |
 | **Verifier** | Runs tests, lint, typecheck, build mechanically | Config only | Verification report | fast | yes |
@@ -166,7 +166,7 @@ The Evaluator critically examines the TDD, validates claims against the codebase
 > /sdlc-planner Decompose the TDD at .sdlc/projects/<slug>/00-tdd.md into tasks
 ```
 
-The Planner reads the TDD and creates self-contained tasks with Gherkin scenarios in `.sdlc/projects/<slug>/tasks/`.
+The Planner reads the TDD and creates self-contained tasks with Gherkin scenarios in `.sdlc/projects/<slug>/tasks/`, and writes `01-epic.md` with a **Mermaid task dependency graph** (following `.sdlc/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
 
 **Human gate: Review and approve the task plan.**
 
@@ -217,6 +217,7 @@ After all tasks pass review and verification, the feature is ready for final hum
   templates/                       # Output format templates
     tdd.md
     evaluation.md                  # Evaluator report template
+    epic.md                        # Epic + Mermaid dependency graph
     task.md
     review.md
     verify.md
@@ -480,6 +481,10 @@ The task template is the linchpin of the framework. A well-written task:
 - Lists dependencies with their expected interfaces
 
 The `examples/oauth2/tasks/T001-add-oauth-providers.md` file demonstrates a fully populated task.
+
+### `.sdlc/templates/epic.md` — Epic and Mermaid dependency graph
+
+The Planner uses this for `01-epic.md`: task list, a fenced Mermaid diagram of the full DAG (edge direction: prerequisite → dependent), optional `classDef` colors per parallel stream with a neutral style for merge tasks, and a legend.
 
 ### `.sdlc/templates/evaluation.md` — The Evaluator's Output Format
 
