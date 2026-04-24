@@ -50,8 +50,9 @@ fenced Mermaid block (` ```mermaid ` … ` ``` `) that models the full task DAG.
 **Diagram rules**
 
 - Use `flowchart TD` (or `flowchart LR` if it reads more clearly). One node per
-  task; node IDs must match task file IDs (`T001`, `T002`, …). Prefer
-  `T001["T001: short title"]` only when needed; keep labels ASCII-safe.
+  task; node IDs must match task file IDs (`T001`, `T002`, …). Always label
+  nodes as `T001["T001: short title"]` so both task key and short title are
+  visible; keep labels ASCII-safe.
 - **Edge meaning**: `T001 --> T002` means **T002 depends on T001** (T001 is a
   prerequisite and must complete before T002).
 - Include every task from the plan (none omitted). Tasks with no predecessors
