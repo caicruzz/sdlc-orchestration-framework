@@ -201,13 +201,13 @@ After all tasks pass review and verification, the feature is ready for final hum
 
 ### Archiving a project (optional)
 
-When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **archive** skill in [`.cursor/skills/archive/SKILL.md`](.cursor/skills/archive/SKILL.md). It is included when you copy the full [`.cursor/`](.cursor/) tree (see [Quick Start](#1-copy-into-your-project)); optional details live in [`.cursor/skills/archive/reference.md`](.cursor/skills/archive/reference.md).
+When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **SDLC archive** skill in [`.cursor/skills/sdlc-archive/SKILL.md`](.cursor/skills/sdlc-archive/SKILL.md). It is included when you copy the full [`.cursor/`](.cursor/) tree (see [Quick Start](#1-copy-into-your-project)); optional details live in [`.cursor/skills/sdlc-archive/reference.md`](.cursor/skills/sdlc-archive/reference.md).
 
-**Installing the skill (project vs global).** Cursor loads skills from **`.cursor/skills/<name>/`** in the open workspace, or from **`~/.cursor/skills/<name>/`** for all projects. If you only copied [`.cursor/agents/`](.cursor/agents/) and not the rest of [`.cursor/`](.cursor/), add the skill to the repo: copy this repo’s **`.cursor/skills/archive/`** into **`your-project/.cursor/skills/archive/`** (include `SKILL.md` and `reference.md`). To use the same skill in every repository without per-project files:
+**Installing the skill (project vs global).** Cursor loads skills from **`.cursor/skills/<name>/`** in the open workspace, or from **`~/.cursor/skills/<name>/`** for all projects. If you only copied [`.cursor/agents/`](.cursor/agents/) and not the rest of [`.cursor/`](.cursor/), add the skill to the repo: copy this repo’s **`.cursor/skills/sdlc-archive/`** into **`your-project/.cursor/skills/sdlc-archive/`** (include `SKILL.md` and `reference.md`). To use the same skill in every repository without per-project files:
 
 ```bash
 mkdir -p ~/.cursor/skills
-cp -r /path/to/orchestration-framework/.cursor/skills/archive ~/.cursor/skills/
+cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/skills/
 ```
 
 **How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature`*, *archive project oauth2*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, confirm that supporting files will be **removed** after a summary is written, then execute the steps in the skill.
@@ -237,7 +237,7 @@ cp -r /path/to/orchestration-framework/.cursor/skills/archive ~/.cursor/skills/
   rules/
     sdlc-workflow.mdc              # Workflow enforcement rules
   skills/
-    archive/                       # Optional: clean up a finished project folder
+    sdlc-archive/                  # Optional: clean up a finished .sdlc/projects slug
       SKILL.md
       reference.md
 .sdlc/

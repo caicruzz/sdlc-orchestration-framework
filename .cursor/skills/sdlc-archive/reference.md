@@ -1,4 +1,4 @@
-# Archive skill: example outputs
+# SDLC archive skill: example outputs
 
 Illustrative fragments for **`dependency-graph.md`** and **`project-summary.md`**, based on **`.sdlc/examples/oauth2/`**. That example has no `01-epic.md`; a real run with an epic copies the **## Task dependency graph** section from `01-epic.md` verbatim into `dependency-graph.md`.
 

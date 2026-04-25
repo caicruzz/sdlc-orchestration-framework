@@ -1,22 +1,21 @@
 ---
-name: archive
+name: sdlc-archive
 description: >-
-  Summarizes a local SDLC project (tasks, reviews, verifications, evaluations,
-  epic) into a single project-summary, preserves the task dependency graph in a
-  separate dependency-graph markdown file under a timestamped
-  .sdlc/archive path, and deletes the original supporting files under
-  .sdlc/projects. Leaves 00-tdd.md unchanged. Use when the user wants to
-  archive an SDLC project, clean up .sdlc/projects, or retire a feature slug
-  after the design doc is the only long-lived artifact.
+  SDLC archive: summarizes a local .sdlc/projects feature folder (tasks, reviews,
+  verifications, evaluations, epic) into project-summary.md, writes
+  dependency-graph.md under .sdlc/archive, and deletes supporting markdown;
+  leaves 00-tdd.md unchanged. Use when the user wants to archive an SDLC
+  project, SDLC archive cleanup, clean up .sdlc/projects, or retire a feature
+  slug after the TDD is the only long-lived artifact.
 ---
 
-# Archive SDLC project
+# SDLC archive (project cleanup)
 
 Clean up a per-project folder under **`.sdlc/projects/<slug>/`** (default scope). The TDD remains; everything else is summarized, two files are written per archive run, then the supporting markdown trees are removed. **Never** delete or move **`.sdlc/templates/`** — framework templates are out of scope.
 
 ## When to use
 
-- The user says they want to **archive** a project (e.g. “archive project `my-feature`”, “clean up SDLC for `oauth2`”).
+- The user says they want to **archive** an **SDLC** / **.sdlc/projects** project (e.g. “SDLC archive for `my-feature`”, “archive project `my-feature`”, “clean up SDLC for `oauth2`”).
 - They want a **lean** `.sdlc/projects/<slug>/` with only `00-tdd.md` plus a rolling **`project-summary.md`**.
 
 ## Human gate (required)
