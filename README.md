@@ -1,6 +1,6 @@
 # Agent Orchestration Framework
 
-An agent-driven SDLC framework for [Cursor](https://cursor.com). Define features, decompose them into testable tasks, implement with autonomous agents, and enforce quality through parallel review and verification — all controlled by human gates.
+An agent-driven SDLC framework for [Cursor](https://cursor.com). Define features, decompose them into testable tasks, implement with autonomous agents, and enforce quality through parallel review and verification — all controlled by human gates. **Agent Skills** in `**.cursor/skills/`** are a first-class part of the stack: they package workflows, conventions, and tooling alongside the [agents](#agents), rules, and `**.sdlc/**` config.
 
 ## How It Works
 
@@ -49,14 +49,16 @@ Requirements                      Existing TDD
 
 ## Agents
 
-| Agent | Role | Reads | Writes | Model | Readonly |
-|---|---|---|---|---|---|
-| **Architect** | Produces Technical Design Document from requirements | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md` | inherit | no |
-| **Evaluator** | Critically evaluates TDDs — finds flaws, blind spots, trade-offs | TDD + codebase exploration | Returns critique as text (main agent persists) | inherit | yes |
-| **Planner** | Decomposes TDD into self-contained Gherkin-based tasks | TDD only | Epic at `01-epic.md` + tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no |
-| **Coder** | Implements task + writes tests from Gherkin scenarios | ONE task + config | Production code + tests | inherit | no |
-| **Reviewer** | Reviews code quality, bugs, scenario coverage | ONE task + code diff | Review report | inherit | yes |
-| **Verifier** | Runs tests, lint, typecheck, build mechanically | Config only | Verification report | fast | yes |
+
+| Agent         | Role                                                             | Reads                               | Writes                                                                   | Model   | Readonly |
+| ------------- | ---------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ | ------- | -------- |
+| **Architect** | Produces Technical Design Document from requirements             | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md`                                 | inherit | no       |
+| **Evaluator** | Critically evaluates TDDs — finds flaws, blind spots, trade-offs | TDD + codebase exploration          | Returns critique as text (main agent persists)                           | inherit | yes      |
+| **Planner**   | Decomposes TDD into self-contained Gherkin-based tasks           | TDD only                            | Epic at `01-epic.md` + tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
+| **Coder**     | Implements task + writes tests from Gherkin scenarios            | ONE task + config                   | Production code + tests                                                  | inherit | no       |
+| **Reviewer**  | Reviews code quality, bugs, scenario coverage                    | ONE task + code diff                | Review report                                                            | inherit | yes      |
+| **Verifier**  | Runs tests, lint, typecheck, build mechanically                  | Config only                         | Verification report                                                      | fast    | yes      |
+
 
 ### Context Isolation
 
@@ -99,6 +101,8 @@ The Evaluator returns a structured report with: Alignment Check, Executive Summa
 cp -r .cursor/ /path/to/your/project/.cursor/
 cp -r .sdlc/ /path/to/your/project/.sdlc/
 ```
+
+That copies **agents**, **rules**, and **skills** — the full `[.cursor/skills/](#cursor-skills)` tree is part of the framework; keep it in sync with this repository.
 
 ### 2. Configure your project
 
@@ -199,29 +203,24 @@ You can also run individual agents explicitly:
 
 After all tasks pass review and verification, the feature is ready for final human review and merge.
 
-### Archiving a project (optional)
+### Archiving a project
 
-When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **SDLC archive** skill in [`.cursor/skills/sdlc-archive/SKILL.md`](.cursor/skills/sdlc-archive/SKILL.md). It is included when you copy the full [`.cursor/`](.cursor/) tree (see [Quick Start](#1-copy-into-your-project)); optional details live in [`.cursor/skills/sdlc-archive/reference.md`](.cursor/skills/sdlc-archive/reference.md).
+When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **SDLC archive** skill in `[.cursor/skills/sdlc-archive/SKILL.md](.cursor/skills/sdlc-archive/SKILL.md)`. It ships with a full `[.cursor/](.cursor/)` copy (see [Quick Start](#1-copy-into-your-project)); more detail in `[.cursor/skills/sdlc-archive/reference.md](.cursor/skills/sdlc-archive/reference.md)`. To add or update skills without recopying everything, follow [Cursor skills](#cursor-skills).
 
-**Installing the skill (project vs global).** Cursor loads skills from **`.cursor/skills/<name>/`** in the open workspace, or from **`~/.cursor/skills/<name>/`** for all projects. If you only copied [`.cursor/agents/`](.cursor/agents/) and not the rest of [`.cursor/`](.cursor/), add the skill to the repo: copy this repo’s **`.cursor/skills/sdlc-archive/`** into **`your-project/.cursor/skills/sdlc-archive/`** (include `SKILL.md` and `reference.md`). To use the same skill in every repository without per-project files:
-
-```bash
-mkdir -p ~/.cursor/skills
-cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/skills/
-```
-
-**How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature`*, *archive project oauth2*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, confirm that supporting files will be **removed** after a summary is written, then execute the steps in the skill.
+**How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature*`, *archive project oauth2*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, confirm that supporting files will be **removed** after a summary is written, then execute the steps in the skill.
 
 **What you get.**
 
-| Location | After a successful archive |
-|----------|----------------------------|
-| **`.sdlc/projects/<slug>/`** | Only **`00-tdd.md`** (unchanged) and **`project-summary.md`** (consolidated summary: epic text, evaluation highlights, one section per task with review/verify outcomes) |
-| **`.sdlc/archive/<slug>/<timestamp>/`** | **`dependency-graph.md`** — full Mermaid task dependency graph and legend copied from `01-epic.md`; **`project-summary.md`** — same content as the copy next to the TDD (self-contained snapshot) |
 
-**What goes away** from `.sdlc/projects/<slug>/` after the two archive files are written: **`01-epic.md`**, **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and any other project-local supporting **`*.md`**, except the TDD and `project-summary.md`. The framework’s **`.sdlc/templates/`** directory and other slugs’ folders are **not** modified.
+| Location                                | After a successful archive                                                                                                                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `**.sdlc/projects/<slug>/`**            | Only `**00-tdd.md**` (unchanged) and `**project-summary.md**` (consolidated summary: epic text, evaluation highlights, one section per task with review/verify outcomes)                          |
+| `**.sdlc/archive/<slug>/<timestamp>/**` | `**dependency-graph.md**` — full Mermaid task dependency graph and legend copied from `01-epic.md`; `**project-summary.md**` — same content as the copy next to the TDD (self-contained snapshot) |
 
-**Git.** In this repository, **`.sdlc/projects/*`** and **`.sdlc/archive/*`** are **gitignored** (with `.gitkeep` placeholders) so local SDLC and archive output stay off the default commit unless you opt in.
+
+**What goes away** from `.sdlc/projects/<slug>/` after the two archive files are written: `**01-epic.md`**, `**tasks/**`, `**evaluations/**`, `**reviews/**`, `**verifications/**`, and any other project-local supporting `***.md**`, except the TDD and `project-summary.md`. The framework’s `**.sdlc/templates/**` directory and other slugs’ folders are **not** modified.
+
+**Git.** In this repository, `**.sdlc/projects/*`** and `**.sdlc/archive/***` are **gitignored** (with `.gitkeep` placeholders) so local SDLC and archive output stay off the default commit unless you opt in.
 
 ## Project Structure
 
@@ -236,8 +235,8 @@ cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/ski
     sdlc-verifier.md
   rules/
     sdlc-workflow.mdc              # Workflow enforcement rules
-  skills/
-    sdlc-archive/                  # Optional: clean up a finished .sdlc/projects slug
+  skills/                          # Core: packaged workflows (see Cursor skills)
+    sdlc-archive/                  # e.g. clean up a finished .sdlc/projects slug
       SKILL.md
       reference.md
 .sdlc/
@@ -261,7 +260,7 @@ cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/ski
         T001-review.md
       verifications/
         T001-verify.md
-  archive/                         # Optional archive runs (gitignored)
+  archive/                         # Output from the SDLC archive skill (gitignored)
     <slug>/
       <timestamp>/
         dependency-graph.md        # Mermaid + legend (from 01-epic)
@@ -324,11 +323,13 @@ Reviewer  Verifier    ← different concerns, different models
 ```
 
 **Reviewer** checks the *semantic* quality:
+
 - Does the code actually satisfy each Gherkin scenario?
 - Are there bugs, edge cases, performance issues?
 - Is the code following project conventions?
 
 **Verifier** checks the *mechanical* quality:
+
 - Do all tests pass?
 - Is the linting clean?
 - Does the type checker pass?
@@ -369,15 +370,47 @@ your-project/
   .cursor/
     agents/           ← project-scoped agents
     rules/            ← project-scoped rules
+    skills/           ← core: one subfolder per skill (see Cursor skills)
   .sdlc/
     config.md         ← project-specific config
     templates/        ← project-specific templates
 ```
 
 Use this when:
+
 - The project has specific conventions, test frameworks, or architecture patterns
 - You want the framework checked into version control for the whole team
 - Templates need to be customized for the project's domain
+
+### Cursor skills
+
+**Skills are core to this framework** — not an add-on. They ship how-to for workflows (like SDLC project archive), keep conventions consistent, and will grow as we add more capabilities. Cursor loads [Agent Skills](https://cursor.com/docs/context/skills) from `**.cursor/skills/<skill-name>/`** in the workspace, and from `**~/.cursor/skills/<skill-name>/**` when you install them globally. Each skill lives in its **own subfolder** so the entry file can stay named `SKILL.md` without colliding.
+
+**Layout (identify the skill by folder name, not by filename):**
+
+```
+.cursor/skills/
+  sdlc-archive/
+    SKILL.md          ← instructions (name in frontmatter is sdlc-archive)
+    reference.md      ← supplementary note (if present)
+  <other-skill>/
+    SKILL.md
+```
+
+The `**name**` field in each `SKILL.md` should match the parent folder name (see the [skills](https://cursor.com/docs/context/skills) docs).
+
+**Do not** copy loose `SKILL.md` files into `**.cursor/skills/`** — every skill uses the same filename, so they would overwrite each other and you could not tell which skill is which without opening the file. **Always copy the whole named directory** (or the whole `skills/` tree).
+
+
+| Goal                                              | Command (adjust paths)                                                                                                                    |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **All skills** from this framework into a project | `mkdir -p your-project/.cursor && cp -r /path/to/orchestration-framework/.cursor/skills your-project/.cursor/`                            |
+| **One skill** (e.g. SDLC archive) into a project  | `mkdir -p your-project/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive your-project/.cursor/skills/` |
+| **All skills** globally (every repo)              | `mkdir -p ~/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/* ~/.cursor/skills/`                                  |
+| **One skill** globally                            | `mkdir -p ~/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/skills/`                       |
+
+
+If `**~/.cursor/skills/`** already contains other skills, copying a **single** named folder only adds or replaces that folder; using `cp -r .../skills/`* merges the full set (still one subfolder per skill).
 
 ### User-Level (global, all projects)
 
@@ -392,13 +425,18 @@ Agents and rules can also be installed globally so they're available in **every*
     sdlc-coder.md
     sdlc-reviewer.md
     sdlc-verifier.md
+  skills/              ← user-scoped skills (same layout as .cursor/skills/)
+    <skill-name>/
+      SKILL.md
 ```
 
 Cursor also reads from Claude and Codex compatibility paths:
+
 - `~/.claude/agents/`
 - `~/.codex/agents/`
 
 Use this when:
+
 - You want the SDLC agents available in every repo without setup
 - You work across many projects and don't want to copy agents each time
 - You have personal preferences for agent behavior that apply everywhere
@@ -417,13 +455,16 @@ ln -s $(pwd)/.cursor/agents/*.md ~/.cursor/agents/
 
 The most effective setup combines both scopes:
 
-| Scope | What to install | Why |
-|---|---|---|
-| **User-level** (`~/.cursor/agents/`) | All 6 agents | Available everywhere, no per-project copy |
-| **User-level** (`~/.cursor/rules/`) | Workflow rule | Enforces the SDLC process in every project |
-| **Project-level** (`.sdlc/`) | `config.md` + templates | Project-specific stack, commands, and output formats |
 
-Agents are global (same behavior everywhere), but `config.md` and templates are project-local (different test commands, different TDD sections per project). This is the intended design — the agents read `.sdlc/config.md` from the project root at runtime, so they adapt to whatever project they're invoked in.
+| Scope                                | What to install                | Why                                                  |
+| ------------------------------------ | ------------------------------ | ---------------------------------------------------- |
+| **User-level** (`~/.cursor/agents/`) | All 6 agents                   | Available everywhere, no per-project copy            |
+| **User-level** (`~/.cursor/rules/`)  | Workflow rule                  | Enforces the SDLC process in every project           |
+| **User-level** (`~/.cursor/skills/`) | All skills from this framework | Same packaged workflows in every repo                |
+| **Project-level** (`.sdlc/`)         | `config.md` + templates        | Project-specific stack, commands, and output formats |
+
+
+Agents and skills are global when installed under `~/.cursor/` (same behavior everywhere). `config.md` and templates are project-local (different test commands, different TDD sections per project). The agents read `.sdlc/config.md` from the project root at runtime, so they adapt to whatever project they're invoked in.
 
 #### Precedence rules
 
@@ -437,13 +478,15 @@ This means you can install agents globally but override a specific agent per-pro
 
 ### Recommended Setup
 
-**For individual developers** — install agents + workflow rule globally, add `.sdlc/` per project:
+**For individual developers** — install agents, workflow rule, and **skills** globally, add `.sdlc/` per project:
 
 ```bash
 # One-time global setup
-mkdir -p ~/.cursor/agents ~/.cursor/rules
+mkdir -p ~/.cursor/agents ~/.cursor/rules ~/.cursor/skills
 cp .cursor/agents/*.md ~/.cursor/agents/
 cp .cursor/rules/sdlc-workflow.mdc ~/.cursor/rules/
+# Skills (one subfolder per skill — see "Cursor skills" above)
+test -d .cursor/skills && cp -r .cursor/skills/* ~/.cursor/skills/
 
 # Per project: just add the config and templates
 cp -r .sdlc/ /path/to/your/project/.sdlc/
@@ -458,7 +501,7 @@ cp -r .sdlc/ /path/to/your/project/.sdlc/
 # Edit .sdlc/config.md, commit, push
 ```
 
-Everyone on the team gets the same agents, templates, and config from `git pull`.
+Everyone on the team gets the same agents, rules, **skills**, templates, and config from `git pull`.
 
 ## Customizing for Your Project
 
@@ -532,6 +575,7 @@ The Verifier reads command configurations from here. If a command is missing or 
 ### `.cursor/rules/sdlc-workflow.mdc` — Workflow Enforcement
 
 This Cursor rule file instructs the main Cursor agent on the SDLC process. It enforces:
+
 - Two entry paths (generate TDD vs. bring your own)
 - Mandatory Evaluator step before planning
 - The fork-join Review + Verify loop
@@ -544,6 +588,37 @@ This Cursor rule file instructs the main Cursor agent on the SDLC process. It en
 - [Cursor](https://cursor.com) with agent mode enabled
 - A project with a configured test runner and linter
 - No additional dependencies — this is pure configuration
+
+## Troubleshooting
+
+If something is wrong and you want a **clean reinstall**, remove the **Cursor-side** copy of the framework and copy it again. **Keep** **`.sdlc/`** so you do not lose [`config.md`](.sdlc/config.md), [`templates/`](.sdlc/templates/), or work under [`.sdlc/projects/`](.sdlc/projects/).
+
+### Project-level (`.cursor/` in your app repo)
+
+Replace both paths with your clone of **orchestration-framework** and your app’s root. Do **not** run `rm` on `.sdlc`.
+
+```bash
+rm -rf /path/to/your/project/.cursor
+cp -r /path/to/orchestration-framework/.cursor/ /path/to/your/project/.cursor/
+```
+
+### User-level (`~/.cursor/`) — only if you installed agents, rules, or skills globally
+
+Manually delete each framework skill directory you had installed under **`~/.cursor/skills/`** (for example the **`sdlc-archive`** folder) using Finder or another file manager, so you do not remove unrelated skills by accident. Then run the `cp` lines from a clone of **orchestration-framework** (the `cd` sets that up in one place):
+
+```bash
+cd /path/to/orchestration-framework
+
+rm -f ~/.cursor/agents/sdlc-*.md
+rm -f ~/.cursor/rules/sdlc-workflow.mdc
+
+mkdir -p ~/.cursor/agents ~/.cursor/rules ~/.cursor/skills
+cp .cursor/agents/*.md ~/.cursor/agents/
+cp .cursor/rules/sdlc-workflow.mdc ~/.cursor/rules/
+test -d .cursor/skills && cp -r .cursor/skills/* ~/.cursor/skills/
+```
+
+Then, for each app, only refresh **`.cursor/`** if needed (use the project-level block) or ensure **`.sdlc/`** exists per [Quick Start](#quick-start).
 
 ## Acknowledgments
 
