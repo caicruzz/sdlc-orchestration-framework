@@ -199,6 +199,30 @@ You can also run individual agents explicitly:
 
 After all tasks pass review and verification, the feature is ready for final human review and merge.
 
+### Archiving a project (optional)
+
+When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **archive** skill in [`.cursor/skills/archive/SKILL.md`](.cursor/skills/archive/SKILL.md). It is included when you copy the full [`.cursor/`](.cursor/) tree (see [Quick Start](#1-copy-into-your-project)); optional details live in [`.cursor/skills/archive/reference.md`](.cursor/skills/archive/reference.md).
+
+**Installing the skill (project vs global).** Cursor loads skills from **`.cursor/skills/<name>/`** in the open workspace, or from **`~/.cursor/skills/<name>/`** for all projects. If you only copied [`.cursor/agents/`](.cursor/agents/) and not the rest of [`.cursor/`](.cursor/), add the skill to the repo: copy this repo’s **`.cursor/skills/archive/`** into **`your-project/.cursor/skills/archive/`** (include `SKILL.md` and `reference.md`). To use the same skill in every repository without per-project files:
+
+```bash
+mkdir -p ~/.cursor/skills
+cp -r /path/to/orchestration-framework/.cursor/skills/archive ~/.cursor/skills/
+```
+
+**How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature`*, *archive project oauth2*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, confirm that supporting files will be **removed** after a summary is written, then execute the steps in the skill.
+
+**What you get.**
+
+| Location | After a successful archive |
+|----------|----------------------------|
+| **`.sdlc/projects/<slug>/`** | Only **`00-tdd.md`** (unchanged) and **`project-summary.md`** (consolidated summary: epic text, evaluation highlights, one section per task with review/verify outcomes) |
+| **`.sdlc/archive/<slug>/<timestamp>/`** | **`dependency-graph.md`** — full Mermaid task dependency graph and legend copied from `01-epic.md`; **`project-summary.md`** — same content as the copy next to the TDD (self-contained snapshot) |
+
+**What goes away** from `.sdlc/projects/<slug>/` after the two archive files are written: **`01-epic.md`**, **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and any other project-local supporting **`*.md`**, except the TDD and `project-summary.md`. The framework’s **`.sdlc/templates/`** directory and other slugs’ folders are **not** modified.
+
+**Git.** In this repository, **`.sdlc/projects/*`** and **`.sdlc/archive/*`** are **gitignored** (with `.gitkeep` placeholders) so local SDLC and archive output stay off the default commit unless you opt in.
+
 ## Project Structure
 
 ```
@@ -212,6 +236,10 @@ After all tasks pass review and verification, the feature is ready for final hum
     sdlc-verifier.md
   rules/
     sdlc-workflow.mdc              # Workflow enforcement rules
+  skills/
+    archive/                       # Optional: clean up a finished project folder
+      SKILL.md
+      reference.md
 .sdlc/
   config.md                        # Project-specific configuration
   templates/                       # Output format templates
@@ -233,6 +261,11 @@ After all tasks pass review and verification, the feature is ready for final hum
         T001-review.md
       verifications/
         T001-verify.md
+  archive/                         # Optional archive runs (gitignored)
+    <slug>/
+      <timestamp>/
+        dependency-graph.md        # Mermaid + legend (from 01-epic)
+        project-summary.md         # Copy of the summary next to the TDD
   examples/                        # Example artifacts for reference
     oauth2/
       00-tdd.md
