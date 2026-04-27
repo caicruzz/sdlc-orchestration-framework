@@ -49,7 +49,7 @@ description: >-
    - **Re-invoke** `/sdlc-evaluator` on the **revised** TDD
    - Append or update **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`** to reflect the latest run (or successive timestamped evaluation files per team convention; default is one `00-tdd-evaluation.md` for the latest run)
 5. **Human gate — required:** After the evaluation verdict allows progress (i.e. not `needs-revision` / `blocked` for the current revision), **wait for explicit human approval** of the TDD before any Phase 2 (Planner) work
-6. **Stop** this skill. Next step: planning uses **`/sdlc-planner`** only **after** human approval (typically via a Phase 2 / planning skill when you add one).
+6. **Stop** this skill. Next step: use the **`sdlc-plan`** skill and **`/sdlc-planner`** only **after** human approval of the TDD.
 
 ## What you must not do in Phase 1
 
@@ -77,7 +77,7 @@ The **primary** path is: follow this skill’s steps, using **`/sdlc-architect`*
 | Persisted evaluation | `.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md` |
 | TDD template | `.sdlc/templates/tdd.md` |
 
-**Next phase:** after human approval → **`/sdlc-planner`** (often described in a planning skill).
+**Next phase:** after human approval → **[`sdlc-plan`](../sdlc-plan/SKILL.md)** — **`/sdlc-planner`**
 
 ## Verification (for the agent)
 
