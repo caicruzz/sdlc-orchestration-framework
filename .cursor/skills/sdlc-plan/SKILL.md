@@ -47,7 +47,7 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 
 3. **Human gate — required:** **Wait for explicit human approval** of the task plan (epic + tasks + graph) before any **Phase 3** implementation work
 
-4. **Stop** this skill. Next step: implement tasks in dependency order (Phase 3 / implementation skill when you add one).
+4. **Stop** this skill. Next step: **[`sdlc-implement`](../sdlc-implement/SKILL.md)** — tasks in **dependency order** (Coder → parallel Review + Verify).
 
 ## What you must not do in Phase 2
 
@@ -72,7 +72,7 @@ Primary path: **`/sdlc-planner`** as above. Users may run the Planner manually w
 | Epic template | `.sdlc/templates/epic.md` |
 | Task template | `.sdlc/templates/task.md` |
 
-**Next phase:** after human approval → implement tasks in **dependency order** (Coder + parallel Reviewer/Verifier).
+**Next phase:** **`sdlc-implement`** — Coder, then parallel Reviewer + Verifier, per task following the epic graph.
 
 ## Verification (for the agent)
 
