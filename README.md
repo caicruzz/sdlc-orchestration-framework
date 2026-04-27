@@ -164,6 +164,8 @@ The Evaluator critically examines the TDD, validates claims against the codebase
 
 **Human gate: Review the evaluation and approve the TDD.**
 
+**Skill (Phase 1).** The **[`sdlc-tdd`](.cursor/skills/sdlc-tdd/SKILL.md)** skill encodes both paths (generate vs bring-your-own TDD), mandatory Evaluator, persisting **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`**, and the approval gate.
+
 ### Phase 2: Planning
 
 ```
@@ -234,6 +236,8 @@ When a feature is finished, use the **SDLC archive** skill in [`.cursor/skills/s
   rules/
     sdlc-workflow.mdc              # Workflow enforcement rules
   skills/                          # Core: packaged workflows (see Cursor skills)
+    sdlc-tdd/                      # Phase 1: TDD paths + Evaluator + approval gate
+      SKILL.md
     sdlc-archive/                  # e.g. clean up a finished .sdlc/projects slug
       SKILL.md
       reference.md
@@ -383,12 +387,14 @@ Use this when:
 
 ### Cursor skills
 
-**Skills are core to this framework** — not an add-on. They ship how-to for workflows (like SDLC project archive), keep conventions consistent, and will grow as we add more capabilities. Cursor loads [Agent Skills](https://cursor.com/docs/context/skills) from `**.cursor/skills/<skill-name>/`** in the workspace, and from `**~/.cursor/skills/<skill-name>/**` when you install them globally. Each skill lives in its **own subfolder** so the entry file can stay named `SKILL.md` without colliding.
+**Skills are core to this framework** — not an add-on. They ship how-to for workflows (Phase 1 TDD in [`sdlc-tdd`](.cursor/skills/sdlc-tdd/SKILL.md), project archive, and more), keep conventions consistent, and will grow as we add more capabilities. Cursor loads [Agent Skills](https://cursor.com/docs/context/skills) from `**.cursor/skills/<skill-name>/`** in the workspace, and from `**~/.cursor/skills/<skill-name>/**` when you install them globally. Each skill lives in its **own subfolder** so the entry file can stay named `SKILL.md` without colliding.
 
 **Layout (identify the skill by folder name, not by filename):**
 
 ```
 .cursor/skills/
+  sdlc-tdd/           # Phase 1: TDD + Evaluator + human approval gate
+    SKILL.md
   sdlc-archive/
     SKILL.md          ← instructions (name in frontmatter is sdlc-archive)
     reference.md      ← supplementary note (if present)
@@ -405,6 +411,7 @@ The `**name**` field in each `SKILL.md` should match the parent folder name (see
 | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | **All skills** from this framework into a project | `mkdir -p your-project/.cursor && cp -r /path/to/orchestration-framework/.cursor/skills your-project/.cursor/`                            |
 | **One skill** (e.g. SDLC archive) into a project  | `mkdir -p your-project/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive your-project/.cursor/skills/` |
+| **Phase 1 skill only** (TDD + Evaluator)          | `mkdir -p your-project/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-tdd your-project/.cursor/skills/`       |
 | **All skills** globally (every repo)              | `mkdir -p ~/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/* ~/.cursor/skills/`                                  |
 | **One skill** globally                            | `mkdir -p ~/.cursor/skills && cp -r /path/to/orchestration-framework/.cursor/skills/sdlc-archive ~/.cursor/skills/`                       |
 
