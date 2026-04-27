@@ -205,22 +205,20 @@ After all tasks pass review and verification, the feature is ready for final hum
 
 ### Archiving a project
 
-When a feature is finished or you want a **lean** per-slug folder under `.sdlc/projects/`, use the **SDLC archive** skill in `[.cursor/skills/sdlc-archive/SKILL.md](.cursor/skills/sdlc-archive/SKILL.md)`. It ships with a full `[.cursor/](.cursor/)` copy (see [Quick Start](#1-copy-into-your-project)); more detail in `[.cursor/skills/sdlc-archive/reference.md](.cursor/skills/sdlc-archive/reference.md)`. To add or update skills without recopying everything, follow [Cursor skills](#cursor-skills).
+When a feature is finished, use the **SDLC archive** skill in [`.cursor/skills/sdlc-archive/SKILL.md`](.cursor/skills/sdlc-archive/SKILL.md). It ships with a full [`.cursor/`](.cursor/) copy (see [Quick Start](#1-copy-into-your-project)); more detail in [`.cursor/skills/sdlc-archive/reference.md`](.cursor/skills/sdlc-archive/reference.md). To add or update skills without recopying everything, follow [Cursor skills](#cursor-skills).
 
-**How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature*`, *archive project oauth2*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, confirm that supporting files will be **removed** after a summary is written, then execute the steps in the skill.
+**How to use it.** In Cursor, ask the agent in plain language, for example: *Archive SDLC project `my-feature`*, *archive project `oauth2`*, or *clean up the .sdlc project for that slug*. The agent follows the skill: confirm the slug, that the **TDD will move** into the archive, and that the **`projects/<slug>`** tree will be removed.
 
-**What you get.**
+**What you get.** One self-contained run folder, **no duplicate `project-summary`**, and the slug directory under `projects/` is removed (you can start a new feature with the same slug later if needed).
 
+| Location | After a successful archive |
+|----------|----------------------------|
+| **`.sdlc/archive/<slug>/<timestamp>/`** | **`00-tdd.md`** — moved from `projects/` (not edited), **`project-summary.md`** — single summary (epic, evaluation highlights, one section per task with review/verify), **`dependency-graph.md`** — full Mermaid + legend from `01-epic` when available |
+| **`.sdlc/projects/<slug>/`** | **Removed** (empty after the move and cleanup) |
 
-| Location                                | After a successful archive                                                                                                                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `**.sdlc/projects/<slug>/`**            | Only `**00-tdd.md**` (unchanged) and `**project-summary.md**` (consolidated summary: epic text, evaluation highlights, one section per task with review/verify outcomes)                          |
-| `**.sdlc/archive/<slug>/<timestamp>/**` | `**dependency-graph.md**` — full Mermaid task dependency graph and legend copied from `01-epic.md`; `**project-summary.md**` — same content as the copy next to the TDD (self-contained snapshot) |
+**What stays** elsewhere: all of **`.sdlc/`** except that slug (config, templates, other slugs’ folders). The framework’s **`.sdlc/templates/`** is never deleted.
 
-
-**What goes away** from `.sdlc/projects/<slug>/` after the two archive files are written: `**01-epic.md`**, `**tasks/**`, `**evaluations/**`, `**reviews/**`, `**verifications/**`, and any other project-local supporting `***.md**`, except the TDD and `project-summary.md`. The framework’s `**.sdlc/templates/**` directory and other slugs’ folders are **not** modified.
-
-**Git.** In this repository, `**.sdlc/projects/*`** and `**.sdlc/archive/***` are **gitignored** (with `.gitkeep` placeholders) so local SDLC and archive output stay off the default commit unless you opt in.
+**Git.** In this repository, **`.sdlc/projects/*`** and **`.sdlc/archive/*`** are **gitignored** (with `.gitkeep` placeholders) so local SDLC and archive output stay off the default commit unless you opt in.
 
 ## Project Structure
 
@@ -260,11 +258,12 @@ When a feature is finished or you want a **lean** per-slug folder under `.sdlc/p
         T001-review.md
       verifications/
         T001-verify.md
-  archive/                         # Output from the SDLC archive skill (gitignored)
+  archive/                         # Self-contained SDLC archive runs (gitignored)
     <slug>/
       <timestamp>/
+        00-tdd.md                  # Moved from projects/<slug>/
         dependency-graph.md        # Mermaid + legend (from 01-epic)
-        project-summary.md         # Copy of the summary next to the TDD
+        project-summary.md         # Single summary; links to ./00-tdd and ./dependency-graph
   examples/                        # Example artifacts for reference
     oauth2/
       00-tdd.md

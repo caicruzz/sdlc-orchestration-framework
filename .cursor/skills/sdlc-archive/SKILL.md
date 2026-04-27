@@ -1,82 +1,76 @@
 ---
 name: sdlc-archive
 description: >-
-  SDLC archive: summarizes a local .sdlc/projects feature folder (tasks, reviews,
-  verifications, evaluations, epic) into project-summary.md, writes
-  dependency-graph.md under .sdlc/archive, and deletes supporting markdown;
-  leaves 00-tdd.md unchanged. Use when the user wants to archive an SDLC
-  project, SDLC archive cleanup, clean up .sdlc/projects, or retire a feature
-  slug after the TDD is the only long-lived artifact.
+  SDLC archive: moves a .sdlc/projects/<slug> folder into a self-contained run
+  under .sdlc/archive/<slug>/<timestamp>/ with 00-tdd.md, a single
+  project-summary.md, and dependency-graph.md. Deletes the slug directory under
+  projects. Use for SDLC archive cleanup, archive project <slug>, or retire a
+  feature when work is done.
 ---
 
 # SDLC archive (project cleanup)
 
-Clean up a per-project folder under **`.sdlc/projects/<slug>/`** (default scope). The TDD remains; everything else is summarized, two files are written per archive run, then the supporting markdown trees are removed. **Never** delete or move **`.sdlc/templates/`** — framework templates are out of scope.
+After a feature is done, **relocate the whole project bundle** into one timestamped directory under **`.sdlc/archive/<slug>/<ts>/`**. There is **one** **`project-summary.md`** (in the archive only), plus **`00-tdd.md`** (moved, not edited) and **`dependency-graph.md`**. The directory **`.sdlc/projects/<slug>/`** is removed when empty. **Never** delete or move **`.sdlc/templates/`** — framework templates are out of scope.
 
 ## When to use
 
-- The user says they want to **archive** an **SDLC** / **.sdlc/projects** project (e.g. “SDLC archive for `my-feature`”, “archive project `my-feature`”, “clean up SDLC for `oauth2`”).
-- They want a **lean** `.sdlc/projects/<slug>/` with only `00-tdd.md` plus a rolling **`project-summary.md`**.
+- The user wants to **archive** an **SDLC** / **.sdlc/projects** project (e.g. “SDLC archive for `my-feature`”, “archive project `my-feature`”, “clean up SDLC for `oauth2`”).
+- They want a **self-contained** record under **`.sdlc/archive/`** and **no** leftover slug folder under **`.sdlc/projects/`** (until they start a new feature with the same slug later).
 
 ## Human gate (required)
 
 1. **Confirm the slug** — resolve to **`.sdlc/projects/<slug>/`**. If the folder or **`00-tdd.md`** is missing, stop: say the project path is missing and suggest they check the slug.
-2. **Confirm destruction** — Original **`01-epic.md`**, **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and other supporting **`*.md`** in that project (except `00-tdd.md` and the new/updated `project-summary.md`) **will be deleted** after a successful write. No full copies of those files are kept; only the archive run’s two markdown files retain the graph + summary.
-3. **Re-archive** — If **`project-summary.md`** already exists from a past run, **replace** it with the new run’s content. Each run must use a **new** timestamp folder under **`.sdlc/archive/`**; do not overwrite prior run folders unless the user explicitly asks.
+2. **Confirm relocation** — **`00-tdd.md`** will be **moved** into the archive run (not left in `projects/`). **Confirm destruction** of **`01-epic.md`**, **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and any other supporting **`*.md`** in that project. No duplicate **`project-summary.md`**: a **single** file is written only inside the archive directory.
+3. **Re-archive** — Each run uses a **new** **`<ts>`** folder. Older runs are left as-is. If **`project-summary.md`** exists only under the old project path (from a pre-change workflow), delete it during cleanup.
 
 ## What you must not touch
 
 | Location | Action |
 |----------|--------|
-| **`.sdlc/projects/<slug>/00-tdd.md`** | **Never** delete, move, or modify |
 | **`.sdlc/templates/*`** | **Never** delete or move |
 | **Other** `.sdlc/projects/*` **slugs** | **Do not** touch |
 | **`.sdlc/examples/`** (default) | **Do not** archive unless the user **explicitly** gives a custom base path to example content |
+| **`00-tdd.md` contents** | **Do not** edit; **move** the file as-is (same bytes) |
 
 ## Procedure
 
 1. **Resolve** `projectRoot` = **`.sdlc/projects/<slug>/`**. Require **`00-tdd.md`** to exist.
-2. **Read** (before any delete):
+2. **Read** (before any delete or move):
+   - **`00-tdd.md`**
    - **`01-epic.md`** (if present)
    - All **`*.md`** under **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`** (if those directories exist)
-   - Any other **`*.md`** in **`projectRoot`** **except** `00-tdd.md` and (for reading strategy) note existing **`project-summary.md`** to replace
-   - If a directory is empty or missing, continue; do not error solely for emptiness
-3. **Create archive run directory**: **`.sdlc/archive/<slug>/<ts>/`** where `<ts>` is **ISO-8601 local** or **`YYYY-MM-DD_HHmm`** so repeated archives do not collide.
-4. **Write** **`dependency-graph.md`** in the archive run:
-   - Prefer extracting, **verbatim**, the epic’s **`## Task dependency graph`** section: include the “Prerequisite direction” paragraph (if it appears under that section), the fenced mermaid code block, and the **Legend** subsection (template uses **`### Legend`** under that heading).
-   - If the epic uses different headings, still capture the mermaid **flowchart** block **plus** the closest Legend section following [`.sdlc/templates/epic.md`](.sdlc/templates/epic.md). If there is no mermaid in `01-epic.md`, write a short note in **`dependency-graph.md`** that no graph was found and, if any, paste raw dependencies from the task list.
-   - Optional first line: epic title (from first `#` in `01-epic.md` if any) and source path e.g. `.sdlc/projects/<slug>/01-epic.md`.
-5. **Compose** **`project-summary.md`** (summarized, not a full copy of every file):
-   - **Metadata**: slug, archive timestamp, one line that **`00-tdd.md`** was left unchanged
-   - **Where the graph lives**: relative path from **`.sdlc/projects/<slug>/project-summary.md`** to **`../../archive/<slug>/<ts>/dependency-graph.md`** (adjust `../` depth if needed) so the reader can open the graph file
-   - **Epic (text)**: title/summary if present, **task list table** (ID, title, depends on) from `01-epic.md` — **do not** paste the mermaid into this file
-   - **TDD evaluation** (if any files under `evaluations/`): verdict, date, a handful of high-signal bullets
-   - **Per task** (order by T001, T002, … or epic order): id, title, final status, one-line objective, scenario **titles** (or very short), review verdict and highlights, verification pass/fail and failed commands if any
-   - **Appendix (optional)**: list of source filenames that were read for this run
-6. **Write** **`project-summary.md`** to **`.sdlc/projects/<slug>/project-summary.md`** (overwrite if re-archiving).
-7. **Write** a **byte-identical** copy to **`.sdlc/archive/<slug>/<ts>/project-summary.md`** so the archive run is self-contained (**exactly two** markdown files in that folder: `dependency-graph.md` and `project-summary.md`).
-8. **Delete** from **`projectRoot`** (only if steps 4–7 succeeded):
-   - **`01-epic.md`** if present
-   - Directories **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`** — remove the **tree** (all files; remove empty parents if applicable)
-   - Any other **`*.md`** in `projectRoot` **except** `00-tdd.md` and `project-summary.md`
-   - Do **not** leave stray copies of the old full task files anywhere under `projectRoot`
-9. **Report** to the user: final layout (`00-tdd.md` + `project-summary.md` in `projects/`), path to the archive run, reminder that `projects/` and `archive/` are typically **gitignored** in this framework.
+   - Any other **`*.md`** in **`projectRoot`** except **`00-tdd.md`** (e.g. stray or legacy **`project-summary.md`** to drop)
+3. **Create** **`.sdlc/archive/<slug>/<ts>/`** where **`<ts>`** is **ISO-8601 local** or **`YYYY-MM-DD_HHmm`**.
+4. **Write** **`dependency-graph.md`** in the archive run (same rules as before: **## Task dependency graph** + mermaid + **Legend** from `01-epic.md` when available; else a short note).
+5. **Compose** **`project-summary.md`** (summarized) **only** into the archive run path **`.sdlc/archive/<slug>/<ts>/project-summary.md`**:
+   - **Metadata**: slug, archive timestamp, one line that **`00-tdd.md`** is in **this** directory (same folder)
+   - **Link to the TDD**: **`./00-tdd.md`**
+   - **Link to the graph**: **`./dependency-graph.md`**
+   - **Epic (text)**: title/summary, task list table from `01-epic.md` — no mermaid
+   - **TDD evaluation** (if any under `evaluations/`): verdict, date, high-signal bullets
+   - **Per task**: id, title, final status, objective one-liner, scenario titles, review + verification outcomes
+   - **Appendix (optional)**: source filenames read for the run
+6. **Move** **`projectRoot/00-tdd.md`** → **`.sdlc/archive/<slug>/<ts>/00-tdd.md`** (use `mv` / `git mv` as appropriate; do not change file contents).
+7. **Delete** the rest of **`projectRoot`** (only after steps 4–6 succeed):
+   - **`01-epic.md`**, tree dirs **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and any other **`*.md`** or files left under **`projectRoot`**
+8. **Remove** the now-empty **`.sdlc/projects/<slug>/`** directory (e.g. `rmdir` or `rm -rf` the slug folder if the tool leaves an empty directory). If non-empty (e.g. only dotfiles), report what is left and ask whether to remove.
+9. **Report** paths: the single self-contained run **`.sdlc/archive/<slug>/<ts>/`** with exactly **`00-tdd.md`**, **`project-summary.md`**, and **`dependency-graph.md`**; that **`projects/<slug>`** is gone. Remind: **`projects/`** and **`archive/`** are often **gitignored** in this framework.
 
 ## Git / ignore behavior
 
-- In this framework repo, **`.sdlc/projects/*`** and **`.sdlc/archive/*`** are usually **ignored** in git; local archive runs stay on disk only unless the user force-adds. Mention that in the handoff.
+- In this framework repo, **`.sdlc/projects/*`** and **`.sdlc/archive/*`** are usually **gitignored**; local data stays on disk unless force-added. Mention that in the handoff.
 
 ## Edge cases
 
 | Situation | Behavior |
 |-----------|----------|
-| Missing `01-epic.md` | Build **`project-summary`** from tasks/evals only; **`dependency-graph.md`** = short note, no mermaid |
-| No task files | Still write summary + graph stub if applicable; delete `tasks/` if empty or missing (noop) |
-| Re-run archive on same slug | New **`<ts>`** folder; replace **`project-summary.md`** in `projects/` |
-| User wants **`.sdlc/examples/...`** archived | Only if they **explicitly** set the project root; default remains **`.sdlc/projects/<slug>`** only |
+| Missing `01-epic.md` | **`project-summary`** from tasks/evals; **`dependency-graph.md`** = stub if needed |
+| No task files | Still write graph stub + summary; remove empty `tasks/` if present |
+| Legacy **`project-summary.md`** in `projectRoot` | Delete when cleaning **`projectRoot`** (step 7) — only one summary exists in the archive run |
+| User wants **`.sdlc/examples/...`** archived | Only if they **explicitly** set a custom `projectRoot` |
 
 ## Verification (for the agent)
 
-- **`.sdlc/projects/<slug>/`** contains only **`00-tdd.md`** and **`project-summary.md`** (plus no leftover `tasks`/`reviews`/`verifications`/`evaluations` content).
-- **`.sdlc/archive/<slug>/<ts>/`** contains **only** **`dependency-graph.md`** and **`project-summary.md`**.
-- **`00-tdd.md`** unchanged; **`.sdlc/templates/`** untouched.
+- **`.sdlc/archive/<slug>/<ts>/`** contains **exactly** three files: **`00-tdd.md`**, **`project-summary.md`**, **`dependency-graph.md`** (no second summary elsewhere).
+- **`.sdlc/projects/<slug>/`** no longer exists (or is empty and removed per step 8).
+- **`00-tdd.md`** was moved, not edited; **`.sdlc/templates/`** untouched.
