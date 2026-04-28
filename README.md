@@ -1,6 +1,6 @@
 # Agent Orchestration Framework
 
-An agent-driven SDLC framework for [Cursor](https://cursor.com). Define features, decompose them into testable tasks, implement with autonomous agents, and enforce quality through parallel review and verification — all controlled by human gates. **Agent Skills** in `**.cursor/skills/`** are a first-class part of the stack: they package workflows, conventions, and tooling alongside the [agents](#agents), rules, and `**.sdlc/**` config.
+An agent-driven SDLC framework for [Cursor](https://cursor.com). Define features, decompose them into testable tasks, implement with autonomous agents, and enforce quality through parallel review and verification — all controlled by human gates. **Agent Skills** in `**.cursor/skills/`** are a first-class part of the stack: they package workflows (phases, gates, agent order), conventions, and tooling alongside the [agents](#agents) and `**.sdlc/**` config.
 
 ## How It Works
 
@@ -102,7 +102,7 @@ cp -r .cursor/ /path/to/your/project/.cursor/
 cp -r .sdlc/ /path/to/your/project/.sdlc/
 ```
 
-That copies **agents**, **rules**, and **skills** — the full `[.cursor/skills/](#cursor-skills)` tree is part of the framework; keep it in sync with this repository.
+That copies **agents** and **skills** — the full `[.cursor/skills/](#cursor-skills)` tree is part of the framework; keep it in sync with this repository.
 
 ### 2. Configure your project
 
@@ -237,9 +237,7 @@ When a feature is finished, use the **SDLC archive** skill in [`.cursor/skills/s
     sdlc-coder.md
     sdlc-reviewer.md
     sdlc-verifier.md
-  rules/
-    sdlc-workflow.mdc              # Workflow enforcement rules
-  skills/                          # Core: packaged workflows (see Cursor skills)
+  skills/                          # Core: packaged workflows + SDLC phases (see Cursor skills)
     sdlc-tdd/                      # Phase 1: TDD paths + Evaluator + approval gate
       SKILL.md
     sdlc-plan/                     # Phase 2: Planner, epic + task DAG, approval gate
@@ -366,11 +364,11 @@ Four mandatory human checkpoints in every workflow:
 3. **Task Sign-off** — Review the review report + verification results before marking done
 4. **Final Merge** — Review the complete feature before merging
 
-The workflow rule in `.cursor/rules/sdlc-workflow.mdc` prevents the agent from proceeding past these gates without explicit human approval.
+Use the **[`sdlc-tdd`](#cursor-skills)**, **`sdlc-plan`**, and **`sdlc-implement`** skills so the orchestrator follows phases, parallel review/verify, and these gates explicitly—skills replace a separate always-on workflow rule.
 
 ## Installation Scopes
 
-Cursor supports two scopes for agents and rules: **project-level** and **user-level**.
+Cursor supports two scopes for agents and skills: **project-level** and **user-level**.
 
 ### Project-Level (per repo)
 
@@ -380,7 +378,6 @@ This is what the Quick Start section covers. Agents and config live inside the p
 your-project/
   .cursor/
     agents/           ← project-scoped agents
-    rules/            ← project-scoped rules
     skills/           ← core: one subfolder per skill (see Cursor skills)
   .sdlc/
     config.md         ← project-specific config
@@ -434,7 +431,7 @@ If `**~/.cursor/skills/`** already contains other skills, copying a **single** n
 
 ### User-Level (global, all projects)
 
-Agents and rules can also be installed globally so they're available in **every** project without copying files:
+Agents and skills can also be installed globally so they're available in **every** project without copying files:
 
 ```
 ~/.cursor/
@@ -479,8 +476,7 @@ The most effective setup combines both scopes:
 | Scope                                | What to install                | Why                                                  |
 | ------------------------------------ | ------------------------------ | ---------------------------------------------------- |
 | **User-level** (`~/.cursor/agents/`) | All 6 agents                   | Available everywhere, no per-project copy            |
-| **User-level** (`~/.cursor/rules/`)  | Workflow rule                  | Enforces the SDLC process in every project           |
-| **User-level** (`~/.cursor/skills/`) | All skills from this framework | Same packaged workflows in every repo                |
+| **User-level** (`~/.cursor/skills/`) | All skills from this framework | SDLC phases, gates, and procedures in every repo     |
 | **Project-level** (`.sdlc/`)         | `config.md` + templates        | Project-specific stack, commands, and output formats |
 
 
@@ -498,13 +494,12 @@ This means you can install agents globally but override a specific agent per-pro
 
 ### Recommended Setup
 
-**For individual developers** — install agents, workflow rule, and **skills** globally, add `.sdlc/` per project:
+**For individual developers** — install agents and **skills** globally, add `.sdlc/` per project:
 
 ```bash
 # One-time global setup
-mkdir -p ~/.cursor/agents ~/.cursor/rules ~/.cursor/skills
+mkdir -p ~/.cursor/agents ~/.cursor/skills
 cp .cursor/agents/*.md ~/.cursor/agents/
-cp .cursor/rules/sdlc-workflow.mdc ~/.cursor/rules/
 # Skills (one subfolder per skill — see "Cursor skills" above)
 test -d .cursor/skills && cp -r .cursor/skills/* ~/.cursor/skills/
 
@@ -521,7 +516,7 @@ cp -r .sdlc/ /path/to/your/project/.sdlc/
 # Edit .sdlc/config.md, commit, push
 ```
 
-Everyone on the team gets the same agents, rules, **skills**, templates, and config from `git pull`.
+Everyone on the team gets the same agents, **skills**, templates, and config from `git pull`.
 
 ## Customizing for Your Project
 
@@ -592,16 +587,9 @@ The `examples/oauth2/evaluations/00-tdd-evaluation.md` file demonstrates a full 
 
 The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set.
 
-### `.cursor/rules/sdlc-workflow.mdc` — Workflow Enforcement
+### `.cursor/skills/` — Workflow (phases and gates)
 
-This Cursor rule file instructs the main Cursor agent on the SDLC process. It enforces:
-
-- Two entry paths (generate TDD vs. bring your own)
-- Mandatory Evaluator step before planning
-- The fork-join Review + Verify loop
-- Human gate requirements
-- Context isolation between agents
-- The correct agent invocation order
+SDLC procedure (paths, Evaluator, Planner, implement loop, human gates) lives in **`sdlc-tdd`**, **`sdlc-plan`**, **`sdlc-implement`**, and **`sdlc-archive`** under [`.cursor/skills/`](#cursor-skills). Invoke or follow those skills instead of a separate always-on workflow rule.
 
 ## Requirements
 
@@ -622,7 +610,7 @@ rm -rf /path/to/your/project/.cursor
 cp -r /path/to/orchestration-framework/.cursor/ /path/to/your/project/.cursor/
 ```
 
-### User-level (`~/.cursor/`) — only if you installed agents, rules, or skills globally
+### User-level (`~/.cursor/`) — only if you installed agents or skills globally
 
 Manually delete each framework skill directory you had installed under **`~/.cursor/skills/`** (for example the **`sdlc-archive`** folder) using Finder or another file manager, so you do not remove unrelated skills by accident. Then run the `cp` lines from a clone of **orchestration-framework** (the `cd` sets that up in one place):
 
@@ -630,11 +618,9 @@ Manually delete each framework skill directory you had installed under **`~/.cur
 cd /path/to/orchestration-framework
 
 rm -f ~/.cursor/agents/sdlc-*.md
-rm -f ~/.cursor/rules/sdlc-workflow.mdc
 
-mkdir -p ~/.cursor/agents ~/.cursor/rules ~/.cursor/skills
+mkdir -p ~/.cursor/agents ~/.cursor/skills
 cp .cursor/agents/*.md ~/.cursor/agents/
-cp .cursor/rules/sdlc-workflow.mdc ~/.cursor/rules/
 test -d .cursor/skills && cp -r .cursor/skills/* ~/.cursor/skills/
 ```
 
