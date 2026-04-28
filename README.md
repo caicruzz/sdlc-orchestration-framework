@@ -126,84 +126,47 @@ Edit `.sdlc/config.md` to match your tech stack:
 
 ### 3. Start a feature
 
-**Path A — Generate a new TDD:**
-
-```
-/sdlc-architect Create a TDD for adding OAuth2 login with Google and GitHub
-```
-
-**Path B — Evaluate an existing TDD:**
-
-```
-/sdlc-evaluator Evaluate the TDD at .sdlc/projects/oauth2/00-tdd.md
-```
+Use the **[`sdlc-tdd`](.cursor/skills/sdlc-tdd/SKILL.md)** skill in natural language—for example: *Run Phase 1 SDLC for OAuth2 with Google and GitHub*, or *Evaluate the TDD at `.sdlc/projects/oauth2/00-tdd.md`*. The skill covers Architect (when needed), mandatory Evaluator, persisting **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`**, and the human approval gate; it documents when **`.cursor/agents/`** subagents are invoked.
 
 ## Workflow
 
 ### Phase 1: Design
 
+Follow **[`sdlc-tdd`](.cursor/skills/sdlc-tdd/SKILL.md)** end-to-end.
+
 #### Path A: Generate TDD
 
-```
-> /sdlc-architect Create a TDD for <feature description>
-```
-
-The Architect explores your codebase and writes a TDD to `.sdlc/projects/<slug>/00-tdd.md`.
+The skill has the **Architect** explore the codebase and write **`.sdlc/projects/<slug>/00-tdd.md`** from your feature description or requirements.
 
 #### Path B: Bring your own TDD
 
-Place your existing TDD at `.sdlc/projects/<slug>/00-tdd.md`.
+Place your existing TDD at **`.sdlc/projects/<slug>/00-tdd.md`**, then continue with the same skill (skip regeneration unless you explicitly want a refresh).
 
 #### Both paths: Evaluate
 
-```
-> /sdlc-evaluator Evaluate .sdlc/projects/<slug>/00-tdd.md
-```
-
-The Evaluator critically examines the TDD, validates claims against the codebase, and returns a structured critique. If the verdict is `needs-revision`, the human revises the TDD and the Evaluator is re-invoked.
+The skill runs the **Evaluator** on **`.sdlc/projects/<slug>/00-tdd.md`**. It critically examines the TDD, validates claims against the codebase, and returns a structured critique. If the verdict is `needs-revision`, the human revises the TDD and evaluation runs again per the skill.
 
 **Human gate: Review the evaluation and approve the TDD.**
 
-**Skill (Phase 1).** The **[`sdlc-tdd`](.cursor/skills/sdlc-tdd/SKILL.md)** skill encodes both paths (generate vs bring-your-own TDD), mandatory Evaluator, persisting **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`**, and the approval gate.
+The skill stops before Phase 2 until the human approves.
 
 ### Phase 2: Planning
 
-```
-> /sdlc-planner Decompose the TDD at .sdlc/projects/<slug>/00-tdd.md into tasks
-```
-
-The Planner reads the TDD and creates self-contained tasks with Gherkin scenarios in `.sdlc/projects/<slug>/tasks/`, and writes `01-epic.md` with a **Mermaid task dependency graph** (following `.sdlc/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
+Follow **[`sdlc-plan`](.cursor/skills/sdlc-plan/SKILL.md)** after the TDD is human-approved. The skill uses the **Planner** to read **`.sdlc/projects/<slug>/00-tdd.md`** and produce self-contained tasks with Gherkin scenarios under **`.sdlc/projects/<slug>/tasks/`**, plus **`01-epic.md`** with a **Mermaid task dependency graph** (following **`.sdlc/templates/epic.md`**). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
 
 **Human gate: Review and approve the task plan.**
 
-**Skill (Phase 2).** The **[`sdlc-plan`](.cursor/skills/sdlc-plan/SKILL.md)** skill drives **`/sdlc-planner`**, requires **`01-epic.md`** with a **`## Task dependency graph`** (Mermaid, legend when parallel), **`tasks/T<id>-*.md`**, self-contained Gherkin tasks, and stops at human approval before implementation.
+The skill requires **`## Task dependency graph`** in **`01-epic.md`** and stops at human approval before implementation; subagent invocation details live in the skill file.
 
 ### Phase 3: Implementation Loop
 
-For each task (respect dependency ordering):
+For each task (respect dependency ordering from **`01-epic.md`**), follow **[`sdlc-implement`](.cursor/skills/sdlc-implement/SKILL.md)**—for example: *Implement T001 for `<slug>`* or *run the SDLC implement loop for the next task*.
 
-```
-> Implement T001
-```
-
-The main Cursor agent will:
-
-1. Invoke `sdlc-coder` to implement the task and write tests
-2. Launch `sdlc-reviewer` and `sdlc-verifier` **in parallel**
-3. If either fails, re-invoke the Coder with the feedback
-4. When both pass, present results for human sign-off
+The skill defines the loop: **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel**; failures get **appended** feedback and another Coder pass; when both pass, results go to the human. Reviewer uses the task path; Verifier uses the task ID and **`.sdlc/config.md`** only. Every scenario must map to tests; ordering follows the epic DAG.
 
 **Human gate: Approve the completed task.**
 
-**Skill (Phase 3).** The **[`sdlc-implement`](.cursor/skills/sdlc-implement/SKILL.md)** skill encodes **`/sdlc-coder`** per task, **`/sdlc-reviewer`** and **`/sdlc-verifier`** **in parallel** (Reviewer: task path; Verifier: task ID + **`.sdlc/config.md`** only), append feedback on failures, satisfy all Gherkin scenarios, DAG order from **`01-epic.md`**, and human approval before **`done`**.
-
-You can also run individual agents explicitly:
-
-```
-> /sdlc-coder Implement .sdlc/projects/<slug>/tasks/T001-<name>.md
-> /sdlc-reviewer Review .sdlc/projects/<slug>/tasks/T001-<name>.md
-> /sdlc-verifier Verify T001
-```
+For low-level or custom orchestration, the **`.cursor/agents/`** definitions still document explicit subagent calls (e.g. **`/sdlc-coder`**, **`/sdlc-reviewer`**, **`/sdlc-verifier`**); prefer driving work through **`sdlc-implement`** so gates and parallelism stay consistent.
 
 ### Phase 4: Completion
 
