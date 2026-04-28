@@ -612,4 +612,4 @@ Then, for each app, only refresh `**.cursor/**` if needed (use the project-level
 
 ## Acknowledgments
 
-Built on [Cursor's subagent architecture](https://cursor.com/docs/subagents) using the orchestrator pattern with context isolation.
+Built on Cursor's [agent skills](https://cursor.com/docs/skills) and [subagent architecture](https://cursor.com/docs/subagents) using the orchestrator pattern with context isolation.
