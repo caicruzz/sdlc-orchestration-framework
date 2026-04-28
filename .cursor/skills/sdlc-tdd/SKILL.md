@@ -27,7 +27,8 @@ description: >-
 ## Path A — No TDD exists
 
 1. **Invoke `/sdlc-architect`** with the feature request, requirements, or a path to a requirements document.
-2. The Architect explores the codebase and writes a TDD to **`.sdlc/projects/<slug>/00-tdd.md`**.
+   - **Include** **`.sdlc/templates/tdd.md`** in context when possible (for example **`@`** that path in Composer, or paste its path explicitly) so the Architect model actually sees the template: **files present on disk are not automatically attached** to subagent runs.
+2. The Architect reads **`tdd.md`**, preserves its structure verbatim in **`00-tdd.md`**, explores the codebase, and fills placeholders.
 
 ## Path B — TDD already exists
 

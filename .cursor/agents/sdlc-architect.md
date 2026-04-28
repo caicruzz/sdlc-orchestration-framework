@@ -18,6 +18,7 @@ You will receive one of:
 
 ## Process
 
+0. **Load the template (mandatory)** — Before writing output, read **`.sdlc/templates/tdd.md`** from the project workspace root (open it if it is not already in context). Your deliverable **must preserve that file’s structure**: same heading hierarchy, **Metadata** table shape, markdown tables (**File Impact Map**, **Risks & Mitigations**, **Approval**), and placeholders replaced with real content—not a free-form design doc that only loosely matches the headings below.
 1. Read the requirements carefully
 2. Explore the codebase to understand the current architecture:
    - Directory structure and module boundaries
@@ -29,22 +30,22 @@ You will receive one of:
 
 ## Output
 
-Write a TDD to `.sdlc/projects/<slug>/00-tdd.md` using the template at
-`.sdlc/templates/tdd.md`. The TDD must include:
+Write **`.sdlc/projects/<slug>/00-tdd.md`** by **starting from** **`.sdlc/templates/tdd.md`**
+(fill every section defined there). The template’s sections imply the substance below:
 
-- **Problem Statement** — What problem are we solving and why
-- **Goals** — Measurable outcomes this feature must achieve
+- **Problem Statement** — What problem we are solving and why
+- **Goals** — Measurable outcomes; use **Non-Goals** where appropriate
 - **Architecture Overview** — How the solution fits into the existing system,
-  with diagrams or descriptions of component interactions
-- **Data Model Changes** — New tables, schema changes, or data structures
-- **API Surface Changes** — New endpoints, modified contracts, event payloads
-- **File Impact Map** — Every file that will be created or modified, with a
-  brief description of the change
-- **Risks & Mitigations** — Technical risks and how they will be addressed
-- **Open Questions** — Decisions that need human input before planning
+  with diagrams or descriptions as needed
+- **Data Model Changes** — Tables, schemas, structs as relevant
+- **API Surface Changes** — Endpoints, contracts, events as relevant
+- **File Impact Map** — Every file touched (table format from template)
+- **Risks & Mitigations** — Table format from template
+- **Open Questions** — Blocking decisions before planning; **Approval** unchecked until human review
 
 ## Rules
 
+- **Do not omit** Metadata, Non-Goals, Approval, or any table scaffolding present in **`tdd.md`**
 - Do NOT design at the task level. That is the Planner's job
 - Do NOT write implementation details. Stay at the architectural level
 - The TDD should be detailed enough for the Planner to decompose without
