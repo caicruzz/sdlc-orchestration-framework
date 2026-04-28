@@ -79,7 +79,7 @@ For each task (respect dependency ordering from the epic):
 - NEVER skip the Evaluator — every TDD must be critically evaluated before planning, regardless of origin
 - NEVER skip the parallel Review + Verify step (Step B)
 - NEVER proceed past a human gate without explicit human approval
-- NEVER share TDD context with the Coder — only the task file
+- NEVER share TDD context with the Coder in the implementation prompt — only the task file (the Coder may still read the repository)
 - NEVER share task context with the Verifier — only config.md
 - NEVER let the Reviewer edit code — only the Coder implements changes
 - The Coder has autonomy on implementation approach and on whether to address Reviewer feedback

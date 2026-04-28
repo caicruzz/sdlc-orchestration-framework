@@ -27,7 +27,7 @@ Requirements                      Existing TDD
                          │
               ┌──────────┼──────────┐
               ▼          ▼          ▼
-          [Coder]    [Coder]    [Coder]     ← each reads ONE task only
+          [Coder]    [Coder]    [Coder]     ← each invoked with ONE task (+ config); full repo for implementation
               │          │          │
           implements + writes tests from Gherkin
               │          │          │
@@ -55,7 +55,7 @@ Requirements                      Existing TDD
 | **Architect** | Produces Technical Design Document from requirements             | Requirements + codebase exploration | TDD at `.sdlc/projects/<slug>/00-tdd.md`                                 | inherit | no       |
 | **Evaluator** | Critically evaluates TDDs — finds flaws, blind spots, trade-offs | TDD + codebase exploration          | Returns critique as text (main agent persists)                           | inherit | yes      |
 | **Planner**   | Decomposes TDD into self-contained Gherkin-based tasks           | TDD only                            | Epic at `01-epic.md` + tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
-| **Coder**     | Implements task + writes tests from Gherkin scenarios            | ONE task + config                   | Production code + tests                                                  | inherit | no       |
+| **Coder**     | Implements task + writes tests from Gherkin scenarios            | Task file + config (+ full repo)    | Production code + tests                                                  | inherit | no       |
 | **Reviewer**  | Reviews code quality, bugs, scenario coverage                    | ONE task + code diff                | Review report                                                            | inherit | yes      |
 | **Verifier**  | Runs tests, lint, typecheck, build mechanically                  | Config only                         | Verification report                                                      | fast    | yes      |
 
@@ -67,11 +67,11 @@ Each agent operates with strict context boundaries:
 - **Architect** → reads requirements and codebase, writes TDD
 - **Evaluator** → reads TDD and codebase, returns critique, never edits files
 - **Planner** → reads TDD only, writes self-contained tasks
-- **Coder** → reads ONE task file only, never sees TDD or other tasks
+- **Coder** → invoked with one task file + config (TDD/epic not in prompt); may read and edit anywhere in the repo per task scope
 - **Reviewer** → reads ONE task + code changes, never edits code
 - **Verifier** → reads config only, has no knowledge of tasks or features
 
-The Planner is the critical translation layer. It must write tasks detailed enough that the Coder never needs the TDD.
+The Planner is the critical translation layer. It must write tasks detailed enough that the Coder does not need the TDD in its prompt (the Coder may still browse the repo).
 
 ### Gherkin as the Contract
 
@@ -570,7 +570,7 @@ The Cursor agent will automatically detect it and delegate based on the descript
 
 The task template is the linchpin of the framework. A well-written task:
 
-- Is completely self-contained — no external context needed
+- Carries requirements and behavior without relying on the TDD or other tasks in the Coder prompt (the Coder can still open the repo)
 - Uses Gherkin scenarios that map directly to test cases
 - Includes inline code snippets from the existing codebase
 - Specifies exact file paths to modify

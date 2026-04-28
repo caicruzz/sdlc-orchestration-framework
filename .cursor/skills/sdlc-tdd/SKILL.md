@@ -57,7 +57,7 @@ description: >-
 |--------|-----|
 | Invoke **Planner** or create **tasks/** / **01-epic.md** | Phase 2 — requires approved TDD first |
 | **Skip** the Evaluator | Every TDD must pass through the Evaluator in Phase 1 |
-| **Share** the TDD with a **Coder** in this phase | Coder is task-only, later |
+| **Share** the TDD with a **Coder** in this phase | Implementation is Phase 3 from task files, not the TDD |
 | Let the **Evaluator** write files on disk | Readonly; main agent persists evaluation |
 
 ## Subagents (optional for the user)

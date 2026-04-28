@@ -9,7 +9,7 @@ description: >-
 
 # SDLC Phase 3 — Implementation (Coder → parallel Review + Verify → loop)
 
-**Phase 3** — For **each** task, in **dependency order** from **`01-epic.md`**, run: **Coder** → **Reviewer** and **Verifier** **in parallel** → handle outcomes → **human approval** → mark task **done**. Repeat until all tasks for the slug are complete. This skill does **not** replace **`.sdlc/config.md`** for the Verifier or the **one-task-only** contract for the Coder.
+**Phase 3** — For **each** task, in **dependency order** from **`01-epic.md`**, run: **Coder** → **Reviewer** and **Verifier** **in parallel** → handle outcomes → **human approval** → mark task **done**. Repeat until all tasks for the slug are complete. This skill does **not** replace **`.sdlc/config.md`** for the Verifier or the **one-task-in-prompt** contract for the Coder (full repo access for implementation is allowed).
 
 ## When to use
 
@@ -24,9 +24,9 @@ description: >-
 
 ## Context isolation (strict)
 
-| Role | Reads | Must not receive |
-|------|--------|------------------|
-| **Coder** | **One** task file **path** + **`.sdlc/config.md`** (per agent definition) | TDD, epic, other tasks |
+| Role | Reads / workspace | Must not receive **in the agent prompt** |
+|------|-------------------|-------------------------------------------|
+| **Coder** | **One** task file **path** + **`.sdlc/config.md`** as inputs; **full repository** for implementation | TDD, epic, other tasks as pasted context |
 | **Reviewer** | One task file + relevant code diff | Editing code *(Reviewer is read-only)* |
 | **Verifier** | **`.sdlc/config.md`** — task identity as **task ID** (e.g. `T001`) for scope | Full task prose / feature context |
 
@@ -78,7 +78,7 @@ When **every** planned task for the slug is **`done`**, give the human a short *
 |--------|-----|
 | Run Reviewer and Verifier **sequentially** or **omit one** before sign-off | **Parallel** Review + Verify is required |
 | Paste **task text** into the **Verifier** | **config.md** (+ task ID) only |
-| Put **TDD** or **epic** into **Coder** context | Violates Planner contract |
+| Put **TDD** or **epic** into the **Coder** prompt | Violates workflow; task file is the spec |
 | **Remove** previous failure feedback when re-invoking Coder | **Append** only |
 | **Let Reviewer edit** implementation | **Coder** edits; Reviewer reads |
 | Implement tasks **out of DAG order** unless the user overrides with scope | Depends-on edges are binding |

@@ -38,7 +38,7 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 - **`T001 --> T002`** means **T002 depends on T001** (T001 finishes before T002)
 - **Parallel streams**: when meaningful, **color-code** streams with **`classDef`** / **`class`**; **merge/join** tasks use a **neutral** style (e.g. gray)
 - **Legend**: short bullets under the diagram mapping streams (and merge style when used) **unless** there is only a linear chain — then **one** node style suffices
-- **Self-contained tasks** — Each task embeds everything the **Coder** needs (the Coder does **not** see the TDD, epic, or other tasks—only **one task file** plus config)
+- **Self-contained tasks** — Each task embeds requirements and behavior the **Coder** needs; **orchestration** does not pass the TDD, epic, or other tasks into the Coder prompt—only **one task file** plus **`.sdlc/config.md`** (the Coder may still use the full repository)
 
 ### Gherkin and task quality
 
@@ -55,7 +55,7 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 |--------|-----|
 | Invoke **Coder**, **Reviewer**, or **Verifier** | Phase 3 — after plan approval |
 | Plan from a **non-approved** or **missing** TDD | Plan must match agreed design |
-| Give the **Coder** the TDD or full epic in this skill | Coder is task-only later; Planner must embed context in each task |
+| Give the **Coder** the TDD or full epic in this skill | Phase 3 passes one task + config only; Planner must embed spec context in each task |
 | Omit **`## Task dependency graph`** or **Mermaid** that matches all tasks | Required for ordering and parallel work |
 
 ## Subagents (optional for the user)

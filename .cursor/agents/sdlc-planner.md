@@ -2,8 +2,9 @@
 name: sdlc-planner
 description: >
   Decomposes a TDD into self-contained tasks with Gherkin behavior specs.
-  Each task must be independently actionable by the Coder without access to
-  the TDD. Use after the TDD has been approved by a human.
+  Each task must be independently actionable from the task file alone (the TDD
+  is not passed to the Coder in the workflow). Use after the TDD has been
+  approved by a human.
 model: inherit
 ---
 
@@ -17,14 +18,14 @@ You will receive the path to an approved TDD at
 
 ## Your Critical Responsibility
 
-Each task you create must be **completely self-contained**. The Coder agent
-that implements your tasks will NOT have access to:
-- The TDD
-- The Epic
-- Any other task
-- The original requirements
+Each task you create must be **completely self-contained** as the Coder's
+**spec**: the orchestration workflow does **not** put the TDD, epic, other
+tasks, or original requirements in the Coder's prompt. The Coder **does** have
+the full codebase and may open any files needed to implement.
 
-Everything the Coder needs must be inside the individual task file.
+Everything the Coder needs to know **as requirements and behavior** must be
+inside the individual task file (plus `.sdlc/config.md` for tooling
+conventions).
 
 ## Process
 
@@ -85,7 +86,7 @@ merge nodes. Omit stream bullets if there is only one uniform style.
 
 ### Context section
 - Include exact file paths the Coder will need to touch
-- Include relevant code snippets inline (the Coder cannot explore freely)
+- Include relevant code snippets inline so the Coder need not rediscover them
 - Reference existing patterns by showing example code from the codebase
 - Specify the test framework and where tests should live
 
@@ -110,7 +111,7 @@ merge nodes. Omit stream bullets if there is only one uniform style.
 ## Quality Checklist
 
 Before finalizing each task, verify:
-- [ ] Could a developer implement this with ONLY the task file and no other context?
+- [ ] Could a developer implement this from the task file as the spec without the TDD or other tasks in their prompt (repo access OK)?
 - [ ] Is every scenario testable with clear pass/fail criteria?
 - [ ] Are edge cases covered?
 - [ ] Is the scope small enough for a single implementation pass?

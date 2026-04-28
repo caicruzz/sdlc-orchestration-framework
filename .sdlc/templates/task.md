@@ -6,10 +6,12 @@
 
 ## Context
 
-<!-- Everything the Coder needs to implement this task WITHOUT reading
-     the TDD or any other task. Include:
+<!-- Everything needed to implement this task without pasting the TDD or other
+     tasks into the Coder's prompt. The Coder still has full repo access—embed
+     paths and snippets here so the task is the single spec and to cut down
+     blind exploration. Include:
      - Exact file paths to read or modify
-     - Relevant code snippets inline (the Coder cannot explore the codebase)
+     - Relevant code snippets inline where helpful
      - Existing patterns to follow (show example code)
      - Test framework and where tests should live
      - Any libraries or utilities already available in the project
