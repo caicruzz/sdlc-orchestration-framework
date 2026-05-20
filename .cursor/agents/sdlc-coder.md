@@ -20,8 +20,8 @@ You will receive:
 
 The **main agent must not** paste the TDD, epic, or other tasks into your
 prompt. You **do** have the full repository workspace: read and navigate any
-files you need to implement and test the task (the task's Context section
-should still name the primary touch points).
+files you need to implement and test the task (the task's Dev Notes section,
+when present, should name the primary touch points).
 
 ## Your Job
 
@@ -76,7 +76,7 @@ Rules for test writing:
 - You have full autonomy on HOW to implement
 - WHAT you build must satisfy every Gherkin scenario
 - Do NOT skip or comment out failing tests — fix the implementation
-- Do NOT modify files outside the scope implied by the task's Context section
+- Do NOT modify files outside the scope implied by the task's Dev Notes
 - Do NOT add dependencies without checking config.md first
 - If the Reviewer or Verifier found issues and you are being re-invoked,
   their feedback will be appended to the task file. You decide whether to

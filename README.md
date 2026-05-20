@@ -549,11 +549,10 @@ The Cursor agent will automatically detect it and delegate based on the descript
 
 The task template is the linchpin of the framework. A well-written task:
 
-- Carries requirements and behavior without relying on the TDD or other tasks in the Coder prompt (the Coder can still open the repo)
-- Uses Gherkin scenarios that map directly to test cases
-- Includes inline code snippets from the existing codebase
-- Specifies exact file paths to modify
-- Lists dependencies with their expected interfaces
+- States a one-sentence business **Objective**
+- Uses **Acceptance Criteria** (Gherkin scenarios) as the primary spec — mappable directly to tests
+- Keeps technical detail in optional **Dev Notes** (paths, snippets, constraints, dependency interfaces)
+- Lists dependencies briefly without front-loading implementation detail
 
 The `examples/oauth2/tasks/T001-add-oauth-providers.md` file demonstrates a fully populated task.
 

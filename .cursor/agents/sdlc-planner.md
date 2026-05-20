@@ -84,23 +84,24 @@ merge nodes. Omit stream bullets if there is only one uniform style.
 
 ## Task Writing Rules
 
-### Context section
-- Include exact file paths the Coder will need to touch
-- Include relevant code snippets inline so the Coder need not rediscover them
-- Reference existing patterns by showing example code from the codebase
-- Specify the test framework and where tests should live
+### Business-first, scenarios as spec
+- **Objective** — one sentence describing the business outcome, not implementation
+- **Acceptance Criteria** — Gherkin scenarios are the primary spec; write them in
+  business language where possible
+- Cover happy paths, error paths, and edge cases as scenarios under
+  **Acceptance Criteria** (no separate edge-case section)
+- Each scenario must be testable — Given/When/Then must be concrete and map
+  directly to a test case
 
-### Gherkin scenarios
-- Write scenarios for every behavior the implementation must exhibit
-- Each scenario must be testable — Given/When/Then must be concrete
-- Cover happy paths AND error paths
-- Cover edge cases in a separate Edge Cases section with their own scenarios
-- Scenarios should be specific enough to generate test code from directly
+### Dev Notes (optional, at the end of the spec)
+- Keep tasks lean — do **not** front-load technical detail
+- Add **Dev Notes** only when the Coder needs help beyond what scenarios imply:
+  file paths, code snippets, patterns to follow, constraints, test setup
+- Put interface contracts from dependencies here, not in the Objective or scenarios
 
 ### Dependencies
-- If a task depends on another task, list the dependency task ID
-- Provide any interface contracts or types that the dependency is expected
-  to expose, so the Coder can work against them
+- If a task depends on another task, list the dependency task ID in the table
+- Keep the "Needed for" column brief and business-oriented
 - Independent tasks should be truly independent — no hidden coupling
 
 ### Scope
@@ -111,11 +112,12 @@ merge nodes. Omit stream bullets if there is only one uniform style.
 ## Quality Checklist
 
 Before finalizing each task, verify:
-- [ ] Could a developer implement this from the task file as the spec without the TDD or other tasks in their prompt (repo access OK)?
+- [ ] Is the Objective a clear business outcome, not an implementation plan?
+- [ ] Could a developer implement this from scenarios + Dev Notes without the TDD or other tasks in their prompt (repo access OK)?
 - [ ] Is every scenario testable with clear pass/fail criteria?
-- [ ] Are edge cases covered?
+- [ ] Are error and edge cases covered as scenarios (not buried in Dev Notes)?
 - [ ] Is the scope small enough for a single implementation pass?
-- [ ] Are dependencies explicitly stated with their expected interfaces?
+- [ ] Are dependencies stated, with interface detail in Dev Notes when needed?
 
 Before finalizing the epic, verify:
 - [ ] `01-epic.md` follows `.sdlc/templates/epic.md` and includes **`## Task dependency graph`** with valid Mermaid that matches every task’s dependencies

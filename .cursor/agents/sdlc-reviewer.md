@@ -36,7 +36,7 @@ For each Gherkin scenario in the task:
 - Are there gaps between the scenario intent and the test coverage?
 
 ### Code Quality
-- Does the code follow the patterns and conventions from the task's Context?
+- Does the code follow the patterns and conventions from the task's Dev Notes?
 - Are there potential bugs or race conditions?
 - Is error handling sufficient for the edge cases listed in the task?
 - Are there performance concerns for the expected scale?

@@ -2,38 +2,25 @@
 
 ## Objective
 
-<!-- One-sentence description of what this task delivers -->
+<!-- One sentence: the business outcome this task delivers. -->
 
-## Context
+## Dependencies
 
-<!-- Everything needed to implement this task without pasting the TDD or other
-     tasks into the Coder's prompt. The Coder still has full repo access—embed
-     paths and snippets here so the task is the single spec and to cut down
-     blind exploration. Include:
-     - Exact file paths to read or modify
-     - Relevant code snippets inline where helpful
-     - Existing patterns to follow (show example code)
-     - Test framework and where tests should live
-     - Any libraries or utilities already available in the project
--->
+<!-- Task IDs this depends on, if any. Keep brief — interface detail goes in Dev Notes. -->
 
-## Constraints
+| Depends On | Needed for |
+|---|---|
+| <!-- T### --> | <!-- what prior work enables --> |
 
-<!-- Things that must be true about the implementation:
-     - Backwards compatibility requirements
-     - Performance requirements
-     - Security requirements
-     - Dependencies that must NOT be added
-     - Files that must NOT be modified
--->
+## Acceptance Criteria
 
-## Behavior Specifications
+<!-- Gherkin scenarios are the spec. Write in business language.
+     Cover happy paths, errors, and edge cases here — no separate edge-case section. -->
 
 ### Feature: <feature name>
 
 #### Scenario: <descriptive scenario name>
 - Given <precondition>
-- And <additional precondition>
 - When <action>
 - Then <expected outcome>
 - And <additional expected outcome>
@@ -43,27 +30,19 @@
 - When <action>
 - Then <expected outcome>
 
-## Edge Cases
+## Dev Notes
 
-#### Scenario: <edge case description>
-- Given <precondition>
-- When <edge case trigger>
-- Then <expected handling>
-
-## Dependencies
-
-<!-- List task IDs this task depends on, if any.
-     For each dependency, include the interface contract
-     (types, functions, API) that the dependency exposes. -->
-
-| Depends On | Interface Needed |
-|---|---|
-| <!-- T### --> | <!-- what this task expects from the dependency --> |
+<!-- Optional. Technical context for implementation — add only when the Coder needs it:
+     - File paths to read or modify
+     - Code snippets and patterns to follow
+     - Constraints (compat, security, dependencies to avoid)
+     - Interface contracts from dependencies
+     - Test framework and where tests should live
+-->
 
 ## Test Mapping
 
-<!-- Filled by the Coder during implementation.
-     Map each scenario to its corresponding test. -->
+<!-- Filled by the Coder during implementation. -->
 
 | Scenario | Test File | Test Name |
 |---|---|---|
@@ -83,7 +62,6 @@
 
 ## Blockers
 
-<!-- If the Coder encounters contradictions or impossible scenarios,
-     document them here and set Status to blocked. -->
+<!-- Contradictions or impossible scenarios — set Status to blocked. -->
 
 ## Status: draft
