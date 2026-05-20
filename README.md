@@ -76,7 +76,7 @@ Path A: No TDD exists             Path B: TDD already exists
 | **Planner**   | Decomposes TDD into self-contained Gherkin-based tasks           | TDD only                            | Epic at `01-epic.md` + tasks at `.sdlc/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
 | **Coder**     | Implements task + writes tests from Gherkin scenarios            | Task file + config (+ full repo)    | Production code + tests                                                  | inherit | no       |
 | **Reviewer**  | Reviews code quality, bugs, scenario coverage                    | ONE task + code diff                | Review report                                                            | inherit | yes      |
-| **Verifier**  | Runs tests, lint, typecheck, build mechanically                  | Config only                         | Verification report                                                      | fast    | yes      |
+| **Verifier**  | Runs tests, lint, typecheck, build mechanically                  | Config only                         | Verification report                                                      | inherit | yes      |
 
 
 ### Context Isolation
