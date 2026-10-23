@@ -6,6 +6,7 @@ description: >
   review report. Never edits code. Use after the Coder completes implementation.
 model: inherit
 readonly: true
+shell: true
 ---
 
 You are a senior code reviewer. You review implementations against their task

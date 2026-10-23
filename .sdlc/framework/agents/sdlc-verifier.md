@@ -6,6 +6,7 @@ description: >
   Coder completes implementation, in parallel with the Reviewer.
 model: inherit
 readonly: true
+shell: true
 ---
 
 You are a verification agent. You run mechanical checks and report pass/fail.
