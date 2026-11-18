@@ -21,7 +21,7 @@ After a feature is done, **relocate the whole project bundle** into one timestam
 
 1. **Confirm the slug** — resolve to **`.ai-factory/projects/<slug>/`**. If the folder or **`00-design.md`** is missing, stop: say the project path is missing and suggest they check the slug.
 2. **Confirm relocation** — **`00-design.md`** will be **moved** into the archive run (not left in `projects/`). **Confirm destruction** of **`01-epic.md`**, **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`**, and any other supporting **`*.md`** in that project. No duplicate **`project-summary.md`**: a **single** file is written only inside the archive directory.
-3. **Re-archive** — Each run uses a **new** **`<ts>`** folder. Older runs are left as-is. If **`project-summary.md`** exists only under the old project path (from a pre-change workflow), delete it during cleanup.
+3. **Re-archive** — Each run uses a **new** **`<ts>`** folder. Older runs are left as-is.
 
 ## What you must not touch
 
@@ -39,9 +39,9 @@ After a feature is done, **relocate the whole project bundle** into one timestam
    - **`00-design.md`**
    - **`01-epic.md`** (if present)
    - All **`*.md`** under **`tasks/`**, **`evaluations/`**, **`reviews/`**, **`verifications/`** (if those directories exist)
-   - Any other **`*.md`** in **`projectRoot`** except **`00-design.md`** (e.g. stray or legacy **`project-summary.md`** to drop)
+   - Any other **`*.md`** in **`projectRoot`** except **`00-design.md`**
 3. **Create** **`.ai-factory/archive/<slug>/<ts>/`** where **`<ts>`** is **ISO-8601 local** or **`YYYY-MM-DD_HHmm`**.
-4. **Write** **`dependency-graph.md`** in the archive run (same rules as before: **## Task dependency graph** + mermaid + **Legend** from `01-epic.md` when available; else a short note).
+4. **Write** **`dependency-graph.md`** in the archive run (**## Task dependency graph** + mermaid + **Legend** from `01-epic.md` when available; else a short note).
 5. **Compose** **`project-summary.md`** (summarized) **only** into the archive run path **`.ai-factory/archive/<slug>/<ts>/project-summary.md`**:
    - **Metadata**: slug, archive timestamp, one line that **`00-design.md`** is in **this** directory (same folder)
    - **Link to the Design Doc**: **`./00-design.md`**
@@ -66,7 +66,6 @@ After a feature is done, **relocate the whole project bundle** into one timestam
 |-----------|----------|
 | Missing `01-epic.md` | **`project-summary`** from tasks/evals; **`dependency-graph.md`** = stub if needed |
 | No task files | Still write graph stub + summary; remove empty `tasks/` if present |
-| Legacy **`project-summary.md`** in `projectRoot` | Delete when cleaning **`projectRoot`** (step 7) — only one summary exists in the archive run |
 | User wants **`.ai-factory/examples/...`** archived | Only if they **explicitly** set a custom `projectRoot` |
 
 ## Verification (for the agent)

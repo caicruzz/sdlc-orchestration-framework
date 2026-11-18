@@ -1,7 +1,7 @@
 ---
 name: factory-plan
 description: >-
-  Stage 2 (Plan) — decompose an approved Design Doc (technical design document, TDD) into self-contained Gherkin tasks and
+  Stage 2 (Plan) — decompose an approved Design Doc into self-contained Gherkin tasks and
   an epic with Mermaid task DAG via factory-planner. Preconditions: evaluated Design Doc,
   human approved for planning. Use for planning stage, 01-epic, task breakdown,
   or "decompose Design Doc into tasks".

@@ -1,7 +1,7 @@
 ---
 name: factory-design
 description: >-
-  Stage 1 (Design) — produce or place a Design Doc (technical design document, TDD), run the Evaluator, persist evaluation,
+  Stage 1 (Design) — produce or place a Design Doc, run the Evaluator, persist evaluation,
   and stop at the human approval gate. Path A: no Design Doc yet — invoke
   factory-architect. Path B: Design Doc already exists at .ai-factory/projects/<slug>/00-design.md.
   Use for design stage, Design Doc workflow, 00-design, architectural design before
@@ -18,7 +18,7 @@ description: >-
 
 - Starting a new feature and need a **Design Doc** at **`.ai-factory/projects/<slug>/00-design.md`**
 - A Design Doc **already exists** (human-written or imported) and you need **evaluation** before planning
-- The user says: *Design Doc stage*, *design document*, *evaluate 00-design*, *red-team the Design Doc*, *evaluate the TDD*, *Path A* / *Path B* for the design stage
+- The user says: *Design Doc stage*, *design document*, *evaluate 00-design*, *red-team the Design Doc*, *Path A* / *Path B* for the design stage
 
 ## Preconditions
 
