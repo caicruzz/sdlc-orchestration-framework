@@ -3,8 +3,8 @@
 *.swo
 *~
 
-.sdlc/projects/*
-!.sdlc/projects/.gitkeep
+.ai-factory/projects/*
+!.ai-factory/projects/.gitkeep
 
-.sdlc/archive/*
-!.sdlc/archive/.gitkeep
+.ai-factory/archive/*
+!.ai-factory/archive/.gitkeep
