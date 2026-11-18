@@ -13,5 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generated adapters match .sdlc/framework
-        run: .sdlc/sync.sh --check
+      - name: Generated adapters match .ai-factory/framework
+        run: .ai-factory/sync.sh --check

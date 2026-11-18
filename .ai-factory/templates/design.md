@@ -1,4 +1,4 @@
-# Technical Design Document
+# Design Doc
 
 ## Metadata
 
@@ -6,7 +6,7 @@
 |---|---|
 | **Project** | <!-- project name --> |
 | **Feature** | <!-- feature name --> |
-| **Author** | sdlc-architect |
+| **Author** | factory-architect |
 | **Status** | draft |
 | **Created** | <!-- date --> |
 
@@ -63,6 +63,6 @@
 
 ## Approval
 
-- [ ] Human has reviewed and approved this TDD
+- [ ] Human has reviewed and approved this Design Doc
 
 <!-- Human: add comments or request revisions below -->

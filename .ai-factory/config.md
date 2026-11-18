@@ -1,4 +1,4 @@
-# SDLC Project Configuration
+# soloAIfactory Project Configuration
 
 Edit this file to match your project's tech stack and conventions.
 The Architect, Planner, Coder, Reviewer, and Verifier agents all read this file.

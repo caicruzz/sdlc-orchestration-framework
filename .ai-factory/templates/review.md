@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | **Task** | T<id>: <title> |
-| **Reviewer** | sdlc-reviewer |
+| **Reviewer** | factory-reviewer |
 | **Date** | <!-- date --> |
 | **Verdict** | <!-- pass / revisions-needed --> |
 

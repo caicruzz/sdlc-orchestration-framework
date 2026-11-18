@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | **Task** | T<id>: <title> |
-| **Verifier** | sdlc-verifier |
+| **Verifier** | factory-verifier |
 | **Date** | <!-- date --> |
 | **Verdict** | <!-- pass / fail --> |
 

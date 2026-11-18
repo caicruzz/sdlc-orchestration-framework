@@ -1,11 +1,11 @@
-# TDD Evaluation Report
+# Design Doc Evaluation Report
 
 ## Metadata
 
 | Field | Value |
 |---|---|
-| **TDD** | <!-- path to TDD --> |
-| **Evaluator** | sdlc-evaluator |
+| **Design Doc** | <!-- path to Design Doc --> |
+| **Evaluator** | factory-evaluator |
 | **Date** | <!-- date --> |
 | **Verdict** | <!-- ready-for-planning / needs-revision / blocked --> |
 
@@ -16,14 +16,14 @@
 
 ## Executive Summary
 
-<!-- Brief, objective summary of what the TDD proposes. No opinions. -->
+<!-- Brief, objective summary of what the Design Doc proposes. No opinions. -->
 
 ## Critical Vulnerabilities & Blind Spots
 
 ### <!-- vulnerability title -->
 
 - **Severity**: <!-- critical / high / medium -->
-- **Origin**: <!-- which section of the TDD this relates to -->
+- **Origin**: <!-- which section of the Design Doc this relates to -->
 - **Description**: <!-- what the vulnerability or blind spot is -->
 - **Impact**: <!-- why it matters -->
 
@@ -53,7 +53,7 @@
 
 ## Verdict
 
-<!-- **ready-for-planning** — TDD is sound enough to decompose. -->
+<!-- **ready-for-planning** — Design Doc is sound enough to decompose. -->
 <!-- **needs-revision** — Significant gaps must be addressed first. -->
 <!-- **blocked** — Fundamental issues require rethinking. -->
 

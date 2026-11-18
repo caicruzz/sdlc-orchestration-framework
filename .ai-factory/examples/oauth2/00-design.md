@@ -1,4 +1,4 @@
-# Technical Design Document
+# Design Doc
 
 ## Metadata
 
@@ -6,7 +6,7 @@
 |---|---|
 | **Project** | Web Application |
 | **Feature** | OAuth2 Social Login |
-| **Author** | sdlc-architect |
+| **Author** | factory-architect |
 | **Status** | draft |
 | **Created** | 2026-04-21 |
 
@@ -129,4 +129,4 @@ set identically to password login.
 
 ## Approval
 
-- [ ] Human has reviewed and approved this TDD
+- [ ] Human has reviewed and approved this Design Doc

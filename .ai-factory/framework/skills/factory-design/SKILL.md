@@ -1,93 +1,93 @@
 ---
-name: sdlc-tdd
+name: factory-design
 description: >-
-  SDLC Phase 1 — produce or place a TDD, run the Evaluator, persist evaluation,
-  and stop at the human approval gate. Path A: no TDD yet — invoke
-  sdlc-architect. Path B: TDD already exists at .sdlc/projects/<slug>/00-tdd.md.
-  Use for design phase, TDD workflow, 00-tdd, architectural design before
-  planning, or "evaluate the TDD".
+  Stage 1 (Design) — produce or place a Design Doc (technical design document, TDD), run the Evaluator, persist evaluation,
+  and stop at the human approval gate. Path A: no Design Doc yet — invoke
+  factory-architect. Path B: Design Doc already exists at .ai-factory/projects/<slug>/00-design.md.
+  Use for design stage, Design Doc workflow, 00-design, architectural design before
+  planning, or "evaluate the Design Doc".
 ---
 
-# SDLC Phase 1 — TDD (Architect + Evaluator)
+# Stage 1 (Design) — Architect + Evaluator
 
-**Phase 1: Design** — produce or place a TDD, run the Evaluator, persist the evaluation, and stop at the **human approval gate** for the TDD. Do **not** invoke the Planner or start implementation in this skill.
+**Stage 1: Design** — produce or place a Design Doc, run the Evaluator, persist the evaluation, and stop at the **human approval gate** for the Design Doc. Do **not** invoke the Planner or start implementation in this skill.
 
 ## When to use
 
-- Starting a new feature and need a **Technical Design Document** at **`.sdlc/projects/<slug>/00-tdd.md`**
-- A TDD **already exists** (human-written or imported) and you need **evaluation** before planning
-- The user says: *TDD phase*, *design document*, *evaluate 00-tdd*, *red-team the TDD*, *Path A* / *Path B* for SDLC design
+- Starting a new feature and need a **Design Doc** at **`.ai-factory/projects/<slug>/00-design.md`**
+- A Design Doc **already exists** (human-written or imported) and you need **evaluation** before planning
+- The user says: *Design Doc stage*, *design document*, *evaluate 00-design*, *red-team the Design Doc*, *evaluate the TDD*, *Path A* / *Path B* for the design stage
 
 ## Preconditions
 
-1. **Resolve `<slug>`** with the user if unclear — kebab-case folder name under **`.sdlc/projects/<slug>/`**
-2. Ensure **`.sdlc/config.md`** (or project config) is available to agents that need it; the Architect references project conventions
-3. TDDs use the template at **`.sdlc/templates/tdd.md`**
+1. **Resolve `<slug>`** with the user if unclear — kebab-case folder name under **`.ai-factory/projects/<slug>/`**
+2. Ensure **`.ai-factory/config.md`** (or project config) is available to agents that need it; the Architect references project conventions
+3. Design Docs use the template at **`.ai-factory/templates/design.md`**
 
-## Path A — No TDD exists
+## Path A — No Design Doc exists
 
-1. **Invoke the `sdlc-architect` subagent** with the feature request, requirements, or a path to a requirements document.
-   - **Include** the path **`.sdlc/templates/tdd.md`** explicitly in the invocation prompt so the Architect reads the template: **files present on disk are not automatically attached** to subagent runs.
-2. The Architect reads **`tdd.md`**, preserves its structure verbatim in **`00-tdd.md`**, explores the codebase, and fills placeholders.
+1. **Invoke the `factory-architect` subagent** with the feature request, requirements, or a path to a requirements document.
+   - **Include** the path **`.ai-factory/templates/design.md`** explicitly in the invocation prompt so the Architect reads the template: **files present on disk are not automatically attached** to subagent runs.
+2. The Architect reads **`design.md`**, preserves its structure verbatim in **`00-design.md`**, explores the codebase, and fills placeholders.
 
-## Path B — TDD already exists
+## Path B — Design Doc already exists
 
-1. **Place** (or **reference**) the TDD at **`.sdlc/projects/<slug>/00-tdd.md`**
-   - If the user’s document lives elsewhere, copy or consolidate into that path so planning has a single canonical TDD
-2. **Do not** run the Architect to regenerate the TDD unless the user explicitly asks to **replace** or **refresh** it
+1. **Place** (or **reference**) the Design Doc at **`.ai-factory/projects/<slug>/00-design.md`**
+   - If the user’s document lives elsewhere, copy or consolidate into that path so planning has a single canonical Design Doc
+2. **Do not** run the Architect to regenerate the Design Doc unless the user explicitly asks to **replace** or **refresh** it
 
 ## Both paths — Evaluator (mandatory)
 
-**Never skip the Evaluator** for any TDD, whether from Path A, Path B, or a revision loop.
+**Never skip the Evaluator** for any Design Doc, whether from Path A, Path B, or a revision loop.
 
-1. **Invoke the `sdlc-evaluator` subagent** with the TDD path: **`.sdlc/projects/<slug>/00-tdd.md`**
-2. The Evaluator **critically** examines the TDD (flaws, blind spots, trade-offs, gaps) and returns a **structured evaluation** with a **verdict**
-3. **Persist** the full evaluation: write it to **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`**
+1. **Invoke the `factory-evaluator` subagent** with the Design Doc path: **`.ai-factory/projects/<slug>/00-design.md`**
+2. The Evaluator **critically** examines the Design Doc (flaws, blind spots, trade-offs, gaps) and returns a **structured evaluation** with a **verdict**
+3. **Persist** the full evaluation: write it to **`.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`**
    - The Evaluator is **readonly** — it only returns text; the **main agent** (or this workflow) is responsible for saving that text to the file
 4. **If the verdict** is `needs-revision` or `blocked`:
    - Present the evaluation to the human clearly
-   - **Wait** for the human to revise the TDD (or direct changes)
-   - **Re-invoke** the `sdlc-evaluator` subagent on the **revised** TDD
-   - Append or update **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`** to reflect the latest run (or successive timestamped evaluation files per team convention; default is one `00-tdd-evaluation.md` for the latest run)
-5. **Human gate — required:** After the evaluation verdict allows progress (i.e. not `needs-revision` / `blocked` for the current revision), **wait for explicit human approval** of the TDD before any Phase 2 (Planner) work
-6. **Stop** this skill. Next step: use the **`sdlc-plan`** skill and **`sdlc-planner`** only **after** human approval of the TDD.
+   - **Wait** for the human to revise the Design Doc (or direct changes)
+   - **Re-invoke** the `factory-evaluator` subagent on the **revised** Design Doc
+   - Append or update **`.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`** to reflect the latest run (or successive timestamped evaluation files per team convention; default is one `00-design-evaluation.md` for the latest run)
+5. **Human quality gate — required:** After the evaluation verdict allows progress (i.e. not `needs-revision` / `blocked` for the current revision), **wait for explicit human approval** of the Design Doc before any Stage 2 (Planner) work
+6. **Stop** this skill. Next step: use the **`factory-plan`** skill and **`factory-planner`** only **after** human approval of the Design Doc.
 
-## What you must not do in Phase 1
+## What you must not do in Stage 1
 
 | Do not | Why |
 |--------|-----|
-| Invoke **Planner** or create **tasks/** / **01-epic.md** | Phase 2 — requires approved TDD first |
-| **Skip** the Evaluator | Every TDD must pass through the Evaluator in Phase 1 |
-| **Share** the TDD with a **Coder** in this phase | Implementation is Phase 3 from task files, not the TDD |
+| Invoke **Planner** or create **tasks/** / **01-epic.md** | Stage 2 — requires approved Design Doc first |
+| **Skip** the Evaluator | Every Design Doc must pass through the Evaluator in Stage 1 |
+| **Share** the Design Doc with a **Coder** in this stage | Implementation is Stage 3 from task files, not the Design Doc |
 | Let the **Evaluator** write files on disk | Readonly; main agent persists evaluation |
 
 ## Invoking subagents
 
-The subagents live in `.cursor/agents/` and `.claude/agents/`; both are generated from `.sdlc/framework/agents/` by `.sdlc/sync.sh`. Wherever this skill says *invoke the `sdlc-<name>` subagent*:
+The subagents live in `.cursor/agents/` and `.claude/agents/`; both are generated from `.ai-factory/framework/agents/` by `.ai-factory/sync.sh`. Wherever this skill says *invoke the `factory-<name>` subagent*:
 
-- **Cursor** — delegate to the subagent by name (e.g. `/sdlc-<name> <input>`).
-- **Claude Code** — call the Agent (Task) tool with `subagent_type: sdlc-<name>` and the input as the prompt.
+- **Cursor** — delegate to the subagent by name (e.g. `/factory-<name> <input>`).
+- **Claude Code** — call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
 
 Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
 
 ## Quick reference
 
-| Path | `00-tdd.md` | Architect | Evaluator |
+| Path | `00-design.md` | Architect | Evaluator |
 |------|-------------|-----------|-----------|
-| **A** | Created by agent | Yes (`sdlc-architect`) | Mandatory |
+| **A** | Created by agent | Yes (`factory-architect`) | Mandatory |
 | **B** | Placed or consolidated by you | No unless replacing | Mandatory |
 
 | Artifact | Path |
 |----------|------|
-| TDD | `.sdlc/projects/<slug>/00-tdd.md` |
-| Persisted evaluation | `.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md` |
-| TDD template | `.sdlc/templates/tdd.md` |
+| Design Doc | `.ai-factory/projects/<slug>/00-design.md` |
+| Persisted evaluation | `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md` |
+| Design Doc template | `.ai-factory/templates/design.md` |
 
-**Next phase:** after human approval → **[`sdlc-plan`](../sdlc-plan/SKILL.md)** — **`sdlc-planner`**
+**Next stage:** after human approval → **[`factory-plan`](../factory-plan/SKILL.md)** — **`factory-planner`**
 
 ## Verification (for the agent)
 
-- **Path A:** **`.sdlc/projects/<slug>/00-tdd.md`** exists after Architect
+- **Path A:** **`.ai-factory/projects/<slug>/00-design.md`** exists after Architect
 - **Path B:** same path exists before Evaluator
-- **`.sdlc/projects/<slug>/evaluations/00-tdd-evaluation.md`** exists and matches the latest Evaluator output
-- **Human** has been prompted for **approval** after a passing eval loop; do not claim Phase 1 “done” without that gate
+- **`.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`** exists and matches the latest Evaluator output
+- **Human** has been prompted for **approval** after a passing eval loop; do not claim Stage 1 “done” without that gate

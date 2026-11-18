@@ -1,11 +1,11 @@
-# TDD Evaluation Report
+# Design Doc Evaluation Report
 
 ## Metadata
 
 | Field | Value |
 |---|---|
-| **TDD** | `.sdlc/examples/oauth2/00-tdd.md` |
-| **Evaluator** | sdlc-evaluator |
+| **Design Doc** | `.ai-factory/examples/oauth2/00-design.md` |
+| **Evaluator** | factory-evaluator |
 | **Date** | 2026-04-21 |
 | **Verdict** | needs-revision |
 
@@ -13,7 +13,7 @@
 
 The core goal is clear: add Google and GitHub OAuth2 login to an existing
 Express + TypeScript web application that currently uses email/password auth.
-The TDD aims to reduce signup friction and password-reset support burden by
+The Design Doc aims to reduce signup friction and password-reset support burden by
 leveraging existing social identities.
 
 Alignment is above 90%. The business goal, success metrics, and constraints are
@@ -21,7 +21,7 @@ well-defined. Proceeding with full evaluation.
 
 ## Executive Summary
 
-The TDD proposes adding OAuth2 Authorization Code Grant flow for Google and
+The Design Doc proposes adding OAuth2 Authorization Code Grant flow for Google and
 GitHub. It introduces a new `oauth_accounts` table, an `AuthProvider` interface
 with concrete implementations for each provider, new Express routes for
 initiating and handling OAuth callbacks, and modifications to the login view.
@@ -34,7 +34,7 @@ is reused.
 
 - **Severity**: critical
 - **Origin**: File Impact Map, routes
-- **Description**: The TDD mentions "cryptographically random state parameter
+- **Description**: The Design Doc mentions "cryptographically random state parameter
   stored in session" in the Risks table but provides no architectural detail
   on HOW the state parameter is generated, stored, validated, or expired. This
   is the primary defense against CSRF in the OAuth flow.
@@ -46,7 +46,7 @@ is reused.
 
 - **Severity**: high
 - **Origin**: Open Questions #1, Data Model
-- **Description**: The TDD lists "Should we auto-link by email?" as an open
+- **Description**: The Design Doc lists "Should we auto-link by email?" as an open
   question but does not define a default behavior. Meanwhile, the `oauth_accounts`
   table design assumes a link exists (it has a `user_id` FK). If a Google and
   a GitHub account share the same email, and no linking strategy is defined,
@@ -68,7 +68,7 @@ is reused.
 
 - **Severity**: medium
 - **Origin**: Architecture Overview, config changes
-- **Description**: The TDD says "Provider configuration is managed via
+- **Description**: The Design Doc says "Provider configuration is managed via
   environment variables only" but does not specify WHEN validation occurs.
   The existing config uses Zod parsing at module load time. Adding optional
   OAuth env vars to the Zod schema means the app either crashes on missing
@@ -122,7 +122,7 @@ If an OAuth provider returns an email that matches an existing user:
 Add a `DELETE /auth/providers/:provider` route that removes the
 `oauth_accounts` row and optionally calls the provider's token revocation
 endpoint. This is a separate task from the initial OAuth implementation but
-should be acknowledged in the TDD's scope as a follow-up.
+should be acknowledged in the Design Doc's scope as a follow-up.
 
 ## Hard Questions
 
@@ -151,15 +151,15 @@ should be acknowledged in the TDD's scope as a follow-up.
 
 **Verdict**: needs-revision
 
-**Reasoning**: The TDD has a sound architectural direction but contains one
+**Reasoning**: The Design Doc has a sound architectural direction but contains one
 critical gap (CSRF state parameter underspecification) and one high-severity
 unresolved decision (email collision handling) that will cause implementation
 ambiguity. These must be resolved before the Planner can decompose into
 well-scoped tasks. The other medium-severity items can be addressed during
-implementation if acknowledged in the TDD.
+implementation if acknowledged in the Design Doc.
 
 **Required revisions**:
 1. Add explicit state parameter lifecycle to the Architecture Overview
 2. Resolve the email collision strategy and update the Data Model accordingly
 3. Specify provider configuration validation behavior at startup
-4. Add a Non-Goals entry for account unlinking (to be addressed in a future TDD)
+4. Add a Non-Goals entry for account unlinking (to be addressed in a future Design Doc)
