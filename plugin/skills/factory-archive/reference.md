@@ -1,6 +1,6 @@
 # Factory archive skill: example outputs
 
-Illustrative fragments for **`dependency-graph.md`** and **`project-summary.md`**, based on **`.ai-factory/examples/oauth2/`**. That example has no `01-epic.md`; a real run with an epic copies the **## Task dependency graph** section from `01-epic.md` verbatim into `dependency-graph.md`. After a run, **`00-design.md`** lives **only** in **`.ai-factory/archive/<slug>/<ts>/00-design.md`**, moved from **`projects/<slug>/`**.
+Fragments for **`dependency-graph.md`** and **`project-summary.md`**, shown as an illustrative OAuth2 example. That example has no `01-epic.md`; a real run with an epic copies the **## Task dependency graph** section from `01-epic.md` verbatim into `dependency-graph.md`. After a run, **`00-design.md`** lives **only** in **`.ai-factory/archive/<slug>/<ts>/00-design.md`**, moved from **`projects/<slug>/`**.
 
 ## Example: dependency-graph.md (synthetic, when epic is missing)
 
@@ -9,7 +9,7 @@ When `01-epic.md` is absent, the skill may emit a short stub plus any graph reco
 - Title line: `# OAuth2 (example) — no epic on disk`
 - Body: a short note that `01-epic.md` was not found, plus optional mermaid if inferred from task IDs.
 
-With a real epic present, the file should include the full **## Task dependency graph** content from the epic: prerequisite paragraph, mermaid `flowchart` block, and **### Legend** (per **`.ai-factory/templates/epic.md`**).
+With a real epic present, the file should include the full **## Task dependency graph** content from the epic: prerequisite paragraph, mermaid `flowchart` block, and **### Legend**, copied as it appears in the project's own `01-epic.md`.
 
 ## Example: project-summary.md (structure only)
 

@@ -10,7 +10,7 @@ description: >-
 
 # Factory archive (project cleanup)
 
-After a feature is done, **relocate the whole project bundle** into one timestamped directory under **`.ai-factory/archive/<slug>/<ts>/`**. There is **one** **`project-summary.md`** (in the archive only), plus **`00-design.md`** (moved, not edited) and **`dependency-graph.md`**. The directory **`.ai-factory/projects/<slug>/`** is removed when empty. **Never** delete or move **`.ai-factory/templates/`** — framework templates are out of scope.
+After a feature is done, **relocate the whole project bundle** into one timestamped directory under **`.ai-factory/archive/<slug>/<ts>/`**. There is **one** **`project-summary.md`** (in the archive only), plus **`00-design.md`** (moved, not edited) and **`dependency-graph.md`**. The directory **`.ai-factory/projects/<slug>/`** is removed when empty.
 
 ## When to use
 
@@ -27,9 +27,7 @@ After a feature is done, **relocate the whole project bundle** into one timestam
 
 | Location | Action |
 |----------|--------|
-| **`.ai-factory/templates/*`** | **Never** delete or move |
 | **Other** `.ai-factory/projects/*` **slugs** | **Do not** touch |
-| **`.ai-factory/examples/`** (default) | **Do not** archive unless the user **explicitly** gives a custom base path to example content |
 | **`00-design.md` contents** | **Do not** edit; **move** the file as-is (same bytes) |
 
 ## Procedure
@@ -66,10 +64,9 @@ After a feature is done, **relocate the whole project bundle** into one timestam
 |-----------|----------|
 | Missing `01-epic.md` | **`project-summary`** from tasks/evals; **`dependency-graph.md`** = stub if needed |
 | No task files | Still write graph stub + summary; remove empty `tasks/` if present |
-| User wants **`.ai-factory/examples/...`** archived | Only if they **explicitly** set a custom `projectRoot` |
 
 ## Verification (for the agent)
 
 - **`.ai-factory/archive/<slug>/<ts>/`** contains **exactly** three files: **`00-design.md`**, **`project-summary.md`**, **`dependency-graph.md`** (no second summary elsewhere).
 - **`.ai-factory/projects/<slug>/`** no longer exists (or is empty and removed per step 8).
-- **`00-design.md`** was moved, not edited; **`.ai-factory/templates/`** untouched.
+- **`00-design.md`** was moved, not edited.
