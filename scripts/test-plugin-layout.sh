@@ -146,48 +146,49 @@ scenario_generator_retired() {
   check ".github/workflows/sync-check.yml is gone" absent .github/workflows/sync-check.yml
 }
 
-# readme_targets <line>: print each [label](target) link target on that
-# README line, one per line.
-readme_targets() {
-  sed -n "${1}p" README.md | grep -o '](\([^)]*\))' | sed 's/^](//; s/)$//' || true
+# readme_links: every [label](target) link target in the README, one per line.
+readme_links() {
+  grep -o '](\([^)]*\))' README.md | sed 's/^](//; s/)$//' || true
 }
 
 # Scenario: Stage-skill links in the README point into plugin/skills/
+# (Line-number free: the README is rewritten by later tasks.)
 scenario_readme_links_point_into_plugin() {
   echo "# Stage-skill links in the README point into plugin/skills/"
-  local spec n want targets t
-  for spec in \
-    149:plugin/skills/factory-design/SKILL.md \
-    157:plugin/skills/factory-design/SKILL.md \
-    177:plugin/skills/factory-plan/SKILL.md \
-    185:plugin/skills/factory-build/SKILL.md \
-    199:plugin/skills/factory-archive/SKILL.md \
-    199:plugin/skills/factory-archive/reference.md; do
-    n=${spec%%:*}
-    want=${spec#*:}
-    targets=$(readme_targets "$n")
-    if printf '%s\n' "$targets" | grep -qxF "$want"; then
-      ok "README line $n links to $want"
+  local links want t skill path stray
+  links=$(readme_links)
+  for want in \
+    plugin/skills/factory-design/SKILL.md \
+    plugin/skills/factory-plan/SKILL.md \
+    plugin/skills/factory-build/SKILL.md \
+    plugin/skills/factory-archive/SKILL.md \
+    plugin/skills/factory-archive/reference.md; do
+    if printf '%s\n' "$links" | grep -qxF "$want"; then
+      ok "README links to $want"
     else
-      bad "README line $n links to $want"
+      bad "README links to $want"
     fi
+    check "README link target $want exists" test -e "$want"
   done
-  for n in 149 157 177 185 199; do
-    targets=$(readme_targets "$n")
-    if [ -z "$targets" ]; then
-      bad "README line $n has a link"
-      continue
+  # Every link labelled with a stage skill name targets that skill's SKILL.md.
+  stray=""
+  # shellcheck disable=SC2016 # backticks are literal Markdown
+  while IFS= read -r t; do
+    [ -n "$t" ] || continue
+    skill=${t#\[\`}
+    skill=${skill%%\`*}
+    path=${t#*](}
+    path=${path%)}
+    if [ "$path" != "plugin/skills/$skill/SKILL.md" ] || [ ! -e "$path" ]; then
+      stray="$stray $t"
     fi
-    while IFS= read -r t; do
-      check "README line $n link target $t exists" test -e "$t"
-    done <<EOF
-$targets
+  done <<EOF
+$(grep -o '\[`factory-[a-z]*`\]([^)]*)' README.md || true)
 EOF
-  done
-  if grep -n '](.ai-factory/framework' README.md >/dev/null; then
-    bad "README has no links into .ai-factory/framework"
+  if [ -z "$stray" ]; then
+    ok "every stage-skill link in the README targets an existing plugin/skills/<skill>/SKILL.md"
   else
-    ok "README has no links into .ai-factory/framework"
+    bad "every stage-skill link in the README targets an existing plugin/skills/<skill>/SKILL.md (found:$stray)"
   fi
 }
 
