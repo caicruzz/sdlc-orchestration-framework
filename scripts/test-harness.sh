@@ -9,7 +9,28 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REPO_ROOT=$(pwd -P)
-TMP_ROOT=$(cd "$(mktemp -d "${TMPDIR:-/tmp}/test-harness.XXXXXX")" && pwd -P)
+# Bare assignment so set -e stops the run if mktemp fails; canonicalise in a
+# separate step (macOS: /var -> /private/var). The EXIT trap deletes TMP_ROOT,
+# so install it only once TMP_ROOT is known to be a fresh directory that is
+# neither the repository, inside it, nor a parent of it.
+TMP_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/test-harness.XXXXXX")
+TMP_ROOT=$(cd "$TMP_ROOT" && pwd -P)
+unsafe_tmp_root() {
+  [ -n "$TMP_ROOT" ] && [ -d "$TMP_ROOT" ] || return 0
+  case "$TMP_ROOT" in
+  / | "$REPO_ROOT" | "$REPO_ROOT"/*) return 0 ;;
+  esac
+  case "$REPO_ROOT" in
+  "$TMP_ROOT"/*) return 0 ;;
+  esac
+  return 1
+}
+if unsafe_tmp_root; then
+  echo "refusing to use temporary directory '$TMP_ROOT': it must be a fresh directory outside $REPO_ROOT" >&2
+  # Remove it only if it is the empty directory mktemp just made.
+  if [ -n "$TMP_ROOT" ]; then rmdir "$TMP_ROOT" 2>/dev/null || true; fi
+  exit 1
+fi
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
 CONFIG=".ai-factory/config.md"
@@ -219,6 +240,36 @@ scenario_lint_fails_outside_git_work_tree() {
   if contains "no shell scripts to lint"; then fail "reported nothing to lint: $OUT"; return 1; fi
 }
 
+# --- Feature: The runners are themselves tested -----------------------------
+
+# Scenario: Harness self-test (the harness never deletes the repository it
+# runs from, even when its temporary directory cannot be made safely).
+# A copy of this file runs inside a sandbox, so a regression could only ever
+# delete the sandbox. Both cases stop before any scenario runs, so nothing
+# recurses.
+scenario_harness_refuses_unsafe_tmp_root() {
+  local sb
+  sb=$(new_sandbox harness-tmp)
+  cp "$REPO_ROOT/scripts/test-harness.sh" "$sb/scripts/"
+  printf 'keep\n' >"$sb/sentinel"
+
+  # mktemp fails: TMPDIR points at a directory that does not exist.
+  run_in "$sb" env TMPDIR="$TMP_ROOT/missing-tmpdir" "$BASH" scripts/test-harness.sh
+  [ "$RC" -ne 0 ] || fail "expected non-zero exit when mktemp fails: $OUT" || return 1
+  [ -f "$sb/sentinel" ] && [ -f "$sb/scripts/test.sh" ] ||
+    fail "sandbox repository was deleted when mktemp failed" || return 1
+  if contains "ok - "; then fail "scenarios ran after mktemp failed: $OUT"; return 1; fi
+
+  # mktemp succeeds, but inside the repository: refused, repository intact.
+  mkdir -p "$sb/inner-tmp"
+  run_in "$sb" env TMPDIR="$sb/inner-tmp" "$BASH" scripts/test-harness.sh
+  [ "$RC" -ne 0 ] || fail "expected non-zero exit for a temp dir inside the repo: $OUT" || return 1
+  contains "refusing to use temporary directory" || fail "missing refusal message: $OUT" || return 1
+  [ -f "$sb/sentinel" ] && [ -f "$sb/scripts/test.sh" ] ||
+    fail "sandbox repository was deleted for a temp dir inside it" || return 1
+  [ -z "$(ls -A "$sb/inner-tmp")" ] || fail "refused temp dir was left behind in the repo" || return 1
+}
+
 # --- Feature: This repo's config --------------------------------------------
 
 # Scenario: Template copied before the config is filled (structure half; the
@@ -317,6 +368,7 @@ scenario_lint_fails_on_shellcheck_warning
 scenario_lint_skips_ignored_files
 scenario_lint_without_shellcheck
 scenario_lint_fails_outside_git_work_tree
+scenario_harness_refuses_unsafe_tmp_root
 scenario_template_is_blank
 scenario_config_points_verifier_at_runners
 scenario_configured_lint_passes
