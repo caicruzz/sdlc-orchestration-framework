@@ -1,5 +1,6 @@
 # Runs the same command the Verifier runs (scripts/test.sh: check.sh and every
-# scripts/test-*.sh) on Linux and on macOS's /bin/bash 3.2, plus shellcheck.
+# scripts/test-*.sh) on Linux and on macOS's /bin/bash 3.2. Both jobs install
+# shellcheck, because test.sh runs lint.sh through test-harness.sh.
 name: check
 
 on:
@@ -30,5 +31,12 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      # scripts/test.sh runs test-harness.sh, whose configured-lint scenario
+      # runs scripts/lint.sh, and lint.sh needs shellcheck.
+      - name: Install shellcheck
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            brew install shellcheck
+          fi
       - name: Test (bash 3.2)
         run: /bin/bash scripts/test.sh
