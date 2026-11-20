@@ -170,13 +170,15 @@ scenario_lifecycle_commands() {
   has "$s" 'other `factory-*` entry' "mentions other factory-* entries"
   has "$s" "left in place" "says other factory-* entries are reported as left in place"
   has "$s" '`--force` removes those too' "says --force removes those too"
-  has "$s" '**Exception: first install, or `--force`.**' \
-    "presents the first install and --force as the exception to stamp-only removal"
-  has "$s" 'With no stamp yet (a first install), or with `--force`, the installer removes every `factory-*` entry in `~/.claude/agents/` and `~/.claude/skills/` that it does not ship' \
-    "says a first install and --force remove every unshipped factory-* entry"
-  has "$s" 'replaces the entries whose names it ships' "says shipped names are replaced"
-  has "$s" 'With a stamp and without `--force`, unlisted `factory-*` entries are left in place' \
-    "says unlisted factory-* entries are left in place with a stamp and without --force"
+  has "$s" '**First install and `--force`.**' \
+    "presents the first install and --force together"
+  has "$s" 'With no stamp yet (a first install), the installer replaces the entries whose names it ships and leaves every other `factory-*` entry in place' \
+    "says a first install keeps unshipped factory-* entries"
+  has "$s" 'Only `--force` removes `factory-*` entries' "says only --force removes unshipped factory-* entries"
+  has "$s" 'With no stamp, or a stamp that lists none for agents or skills, it removes the `factory-*` names this clone ships instead' \
+    "says --uninstall without a stamp removes the names the clone ships"
+  lacks "$s" 'or with `--force`, the installer removes every `factory-*` entry' \
+    "no longer says a first install removes every unshipped factory-* entry"
   lacks "$s" 'any `factory-*` entry already in those directories is replaced' \
     "no longer says a first install only replaces existing factory-* entries"
   has "$s" "records the installed commit and whether the clone had uncommitted changes" \
@@ -518,7 +520,7 @@ scenario_contributor_workflow() {
   has "$s" "this one included" "Contributing: edits apply in every repo, this one included"
   has "$s" "the checked-out branch is what runs everywhere" "Contributing: the checked-out branch runs everywhere"
   has "$s" 'Run `scripts/test.sh` and `scripts/lint.sh`' "Contributing: run test.sh and lint.sh"
-  has "$s" 'CI runs `test.sh` on Ubuntu and on macOS `/bin/bash`, and `lint.sh` on Ubuntu' "Contributing: what CI runs where"
+  has "$s" 'CI runs `test.sh`, which also runs `lint.sh`, on Ubuntu and on macOS `/bin/bash`' "Contributing: what CI runs where"
   has "$s" 'Add or extend a `scripts/test-*.sh` file for every change' "Contributing: a test-*.sh for every change"
   has "$s" '`scripts/run-evals.sh --max-cost-usd <usd>`' "Contributing: run-evals.sh --max-cost-usd"
   has "$s" "paid" "Contributing: evals are paid"

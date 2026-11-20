@@ -10,8 +10,13 @@
 # $HOME/.claude/.soloaifactory (the stamp).
 #
 #   --link       install symlinks into this clone instead of copies
-#   --uninstall  remove what the stamp lists, then the stamp
+#   --uninstall  remove what the stamp lists (with no stamp, or none listed
+#                for a kind, the factory-* names this clone ships), then the
+#                stamp
 #   --force      also remove factory-* entries the stamp does not list
+#
+# Without --force, a factory-* entry that is neither installed by this run nor
+# listed in the stamp is reported and left in place, even with no stamp.
 #
 # Never writes inside a repository, never uses the network, and removes
 # nothing that is not a factory-* entry under $HOME/.claude/agents or
@@ -191,18 +196,24 @@ check_destination() {
   done
 }
 
-# Source sets: sorted, space-separated names.
+# Shipped sets: the names this clone ships, sorted and space-separated.
+ship_agents=""
+ship_skills=""
+for p in "$src/agents"/factory-*.md; do
+  if [ -f "$p" ] && valid_name "${p##*/}"; then ship_agents="$ship_agents ${p##*/}"; fi
+done
+for p in "$src/skills"/factory-*; do
+  if [ -d "$p" ] && valid_name "${p##*/}"; then ship_skills="$ship_skills ${p##*/}"; fi
+done
+ship_agents="${ship_agents# }"
+ship_skills="${ship_skills# }"
+
+# Source sets: what this run installs (nothing on --uninstall).
 src_agents=""
 src_skills=""
 if ! $uninstall; then
-  for p in "$src/agents"/factory-*.md; do
-    if [ -f "$p" ] && valid_name "${p##*/}"; then src_agents="$src_agents ${p##*/}"; fi
-  done
-  for p in "$src/skills"/factory-*; do
-    if [ -d "$p" ] && valid_name "${p##*/}"; then src_skills="$src_skills ${p##*/}"; fi
-  done
-  src_agents="${src_agents# }"
-  src_skills="${src_skills# }"
+  src_agents="$ship_agents"
+  src_skills="$ship_skills"
   if [ -z "$src_agents" ] || [ -z "$src_skills" ]; then
     echo "no factory-* agents or skills found under $src" >&2
     exit 1
@@ -210,11 +221,9 @@ if ! $uninstall; then
 fi
 
 # Previous set: names on the stamp's agents= / skills= lines.
-have_stamp=false
 prev_agents=""
 prev_skills=""
 if [ -f "$stamp" ]; then
-  have_stamp=true
   while IFS= read -r line || [ -n "$line" ]; do
     case "$line" in
       agents=*) prev_agents="${line#agents=}" ;;
@@ -236,6 +245,13 @@ clean_list() {
 }
 prev_agents="$(clean_list "$prev_agents")"
 prev_skills="$(clean_list "$prev_skills")"
+# With no stamp, or a damaged one that lists no valid names for a kind,
+# --uninstall falls back to the names this clone ships for that kind. An
+# install needs no fallback, since it replaces those names anyway.
+if $uninstall; then
+  if [ -z "$prev_agents" ]; then prev_agents="$ship_agents"; fi
+  if [ -z "$prev_skills" ]; then prev_skills="$ship_skills"; fi
+fi
 
 check_destination
 
@@ -275,14 +291,14 @@ swap_kind() {
       note_removed "$dir/$n"
     fi
   done
-  # 3. Any other factory-* entry: removed without a stamp or with --force,
-  #    otherwise left in place.
+  # 3. Any other factory-* entry: removed only with --force, otherwise left
+  #    in place, with or without a stamp (it may be the user's own).
   [ -d "$dir" ] || return 0
   for p in "$dir"/factory-*; do
     if [ ! -e "$p" ] && [ ! -L "$p" ]; then continue; fi
     n="${p##*/}"
     if in_list "$n" "$staged" || in_list "$n" "$listed"; then continue; fi
-    if ! $have_stamp || $force; then
+    if $force; then
       safe_rm "$p"
       note_removed "$p"
     else

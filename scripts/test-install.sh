@@ -543,9 +543,10 @@ scenario_force_removes_unlisted() {
   check "the current set is installed" installed_matches "$h"
 }
 
-# Scenario: No previous stamp means every factory-* entry is replaced
+# Scenario: No previous stamp: shipped names are replaced, other factory-*
+# entries are kept (they may be the user's own)
 scenario_no_stamp_replaces_all() {
-  echo "# No previous stamp means every factory-* entry is replaced"
+  echo "# No previous stamp: shipped names replaced, other factory-* entries kept"
   local h
   h="$(new_home)"
   mkdir -p "$h/.claude/agents" "$h/.claude/skills/factory-mine"
@@ -554,11 +555,78 @@ scenario_no_stamp_replaces_all() {
   echo stale >"$h/.claude/agents/factory-coder.md"
   run_install "$h"
   check "exits 0" test "$RC" -eq 0
+  check "agents/factory-mine.md is kept" grep -qx mine "$h/.claude/agents/factory-mine.md"
+  check "skills/factory-mine is kept" grep -qx mine "$h/.claude/skills/factory-mine/SKILL.md"
+  check "agents/factory-mine.md is reported as left in place" \
+    contains "$h/.claude/agents/factory-mine.md: not installed by soloAIfactory; left in place"
+  check "skills/factory-mine is reported as left in place" \
+    contains "$h/.claude/skills/factory-mine: not installed by soloAIfactory; left in place"
+  check "agents/factory-mine.md is not reported as removed" lacks "removed $h/.claude/agents/factory-mine.md"
+  check "skills/factory-mine is not reported as removed" lacks "removed $h/.claude/skills/factory-mine"
+  check "the stale factory-coder.md is replaced" \
+    cmp -s "$copy/plugin/agents/factory-coder.md" "$h/.claude/agents/factory-coder.md"
+  check "the stamp lists only the shipped agents" test "$(stamp_value "$h" agents)" = "$AGENTS"
+}
+
+# Scenario: No previous stamp with --force removes other factory-* entries
+scenario_no_stamp_force() {
+  echo "# No previous stamp with --force removes other factory-* entries"
+  local h
+  h="$(new_home)"
+  mkdir -p "$h/.claude/agents" "$h/.claude/skills/factory-mine"
+  echo mine >"$h/.claude/agents/factory-mine.md"
+  echo mine >"$h/.claude/skills/factory-mine/SKILL.md"
+  run_install "$h" --force
+  check "exits 0" test "$RC" -eq 0
   check "agents/factory-mine.md is removed" test ! -e "$h/.claude/agents/factory-mine.md"
   check "skills/factory-mine is removed" test ! -e "$h/.claude/skills/factory-mine"
   check "the removed agent path is printed" contains "removed $h/.claude/agents/factory-mine.md"
   check "the removed skill path is printed" contains "removed $h/.claude/skills/factory-mine"
   check "the 6 agents and 5 skills are installed" installed_matches "$h"
+}
+
+# Scenario: --uninstall with no stamp removes the shipped names and keeps
+# other factory-* entries; --force removes those too
+scenario_no_stamp_uninstall() {
+  echo "# --uninstall with no stamp removes shipped names, keeps others"
+  local h a s
+  h="$(new_home)"
+  run_install "$h"
+  rm -f "$h/.claude/.soloaifactory"
+  echo mine >"$h/.claude/agents/factory-mine.md"
+  mkdir -p "$h/.claude/skills/factory-mine"
+  echo mine >"$h/.claude/skills/factory-mine/SKILL.md"
+  run_install "$h" --uninstall
+  check "exits 0" test "$RC" -eq 0
+  check "the 6 agents and 5 skills are removed" nothing_installed "$h"
+  for a in $AGENTS; do check "prints removed agents/$a" contains "removed $h/.claude/agents/$a"; done
+  for s in $SKILLS; do check "prints removed skills/$s" contains "removed $h/.claude/skills/$s"; done
+  check "agents/factory-mine.md is kept" grep -qx mine "$h/.claude/agents/factory-mine.md"
+  check "skills/factory-mine is kept" grep -qx mine "$h/.claude/skills/factory-mine/SKILL.md"
+  check "agents/factory-mine.md is reported as left in place" \
+    contains "$h/.claude/agents/factory-mine.md: not installed by soloAIfactory; left in place"
+  check "skills/factory-mine is reported as left in place" \
+    contains "$h/.claude/skills/factory-mine: not installed by soloAIfactory; left in place"
+
+  run_install "$h" --uninstall --force
+  check "--force: exits 0" test "$RC" -eq 0
+  check "--force: agents/factory-mine.md is removed" test ! -e "$h/.claude/agents/factory-mine.md"
+  check "--force: skills/factory-mine is removed" test ! -e "$h/.claude/skills/factory-mine"
+}
+
+# Scenario: --uninstall with a damaged stamp that lists no names falls back to
+# the shipped names, so one run removes the install
+scenario_damaged_stamp_uninstall() {
+  echo "# --uninstall with a stamp that lists no names"
+  local h
+  h="$(new_home)"
+  run_install "$h"
+  printf 'mode=copy\n' >"$h/.claude/.soloaifactory"
+  run_install "$h" --uninstall
+  check "exits 0" test "$RC" -eq 0
+  check "the 6 agents and 5 skills are removed" nothing_installed "$h"
+  check "the stamp is removed" test ! -e "$h/.claude/.soloaifactory"
+  check "no shipped entry is reported as left in place" lacks "not installed by soloAIfactory; left in place"
 }
 
 # Scenario: Non-factory entries are never touched
@@ -1046,6 +1114,9 @@ for scenario in \
   scenario_damaged_stamp_glob \
   scenario_force_removes_unlisted \
   scenario_no_stamp_replaces_all \
+  scenario_no_stamp_force \
+  scenario_no_stamp_uninstall \
+  scenario_damaged_stamp_uninstall \
   scenario_non_factory_untouched \
   scenario_shell_options \
   scenario_link_installs_symlinks \

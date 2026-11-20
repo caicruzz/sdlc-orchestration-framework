@@ -178,9 +178,9 @@ None of these write in any repo. Upgrades never touch `config.md`, `projects/`, 
 
 **What the installer writes.** `install.sh [--link] [--uninstall] [--force]` writes only `~/.claude/agents/factory-*.md`, `~/.claude/skills/factory-*/`, the stamp `~/.claude/.soloaifactory` and a transient `~/.claude/.soloaifactory-staging/`. It uses no network and never writes in a repo. The new set is staged first and then swapped in, so an interrupted run is repaired by re-running it.
 
-**What it removes.** The installer removes only entries its previous stamp (`~/.claude/.soloaifactory`) lists, for example an agent that a newer version dropped. It reports any other `factory-*` entry in those two directories as left in place, and `--force` removes those too. It prints each removed path. `--uninstall` removes what the stamp lists, then the stamp.
+**What it removes.** The installer removes only entries its previous stamp (`~/.claude/.soloaifactory`) lists, for example an agent that a newer version dropped. It reports any other `factory-*` entry in those two directories as left in place, and `--force` removes those too. It prints each removed path. `--uninstall` removes what the stamp lists, then the stamp. With no stamp, or a stamp that lists none for agents or skills, it removes the `factory-*` names this clone ships instead.
 
-**Exception: first install, or `--force`.** With no stamp yet (a first install), or with `--force`, the installer removes every `factory-*` entry in `~/.claude/agents/` and `~/.claude/skills/` that it does not ship, for example a hand-written `~/.claude/agents/factory-mine.md`, and replaces the entries whose names it ships. With a stamp and without `--force`, unlisted `factory-*` entries are left in place. Move any hand-written `factory-*` entry out of those directories before the first install (a project override under `.claude/agents/` is never touched).
+**First install and `--force`.** With no stamp yet (a first install), the installer replaces the entries whose names it ships and leaves every other `factory-*` entry in place, for example a hand-written `~/.claude/agents/factory-mine.md`, reporting each one. Only `--force` removes `factory-*` entries in `~/.claude/agents/` and `~/.claude/skills/` that it does not ship and the stamp does not list. A project override under `.claude/agents/` is never touched.
 
 **The stamp.** `~/.claude/.soloaifactory` records the installed commit and whether the clone had uncommitted changes (`dirty=true`), along with the source clone, the mode (`copy` or `link`), the install time and the installed agents and skills.
 
@@ -532,7 +532,7 @@ The factory's procedure (onboarding, paths, Evaluator, Planner, build loop, huma
 ## Contributing
 
 1. Run `./install.sh --link` once. The user-level entries become symlinks into your working tree, so edits under `plugin/` apply in every repo, this one included; the checked-out branch is what runs everywhere.
-2. Run `scripts/test.sh` and `scripts/lint.sh` before every push. CI runs `test.sh` on Ubuntu and on macOS `/bin/bash`, and `lint.sh` on Ubuntu.
+2. Run `scripts/test.sh` and `scripts/lint.sh` before every push. CI runs `test.sh`, which also runs `lint.sh`, on Ubuntu and on macOS `/bin/bash`.
 3. Add or extend a `scripts/test-*.sh` file for every change; `scripts/test.sh` picks it up automatically.
 4. Before merging changes to `factory-setup`, run `scripts/run-evals.sh --max-cost-usd <usd>`. It makes paid model calls and needs `ANTHROPIC_API_KEY`.
 
