@@ -146,7 +146,7 @@ Edit `.ai-factory/config.md` to match your tech stack:
 
 ### 3. Start a feature
 
-Use the [`factory-design`](.ai-factory/framework/skills/factory-design/SKILL.md) skill in natural language (Cursor or Claude Code), for example: *Run the design stage for OAuth2 with Google and GitHub*, or *Evaluate the Design Doc at `.ai-factory/projects/oauth2/00-design.md`*. The skill covers the Architect (when needed), the mandatory Evaluator, persisting `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`, and the human quality gate; it documents when the subagents are invoked.
+Use the [`factory-design`](plugin/skills/factory-design/SKILL.md) skill in natural language (Cursor or Claude Code), for example: *Run the design stage for OAuth2 with Google and GitHub*, or *Evaluate the Design Doc at `.ai-factory/projects/oauth2/00-design.md`*. The skill covers the Architect (when needed), the mandatory Evaluator, persisting `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`, and the human quality gate; it documents when the subagents are invoked.
 
 ## Workflow
 
@@ -154,7 +154,7 @@ The factory runs in four stages, each ending at a human quality gate.
 
 ### Stage 1: Design
 
-Follow [`factory-design`](.ai-factory/framework/skills/factory-design/SKILL.md) end-to-end.
+Follow [`factory-design`](plugin/skills/factory-design/SKILL.md) end-to-end.
 
 #### Path A: Generate the Design Doc
 
@@ -174,7 +174,7 @@ The skill stops before Stage 2 until the human approves.
 
 ### Stage 2: Plan
 
-Follow [`factory-plan`](.ai-factory/framework/skills/factory-plan/SKILL.md) after the Design Doc is human-approved. The skill uses the **Planner** to read `.ai-factory/projects/<slug>/00-design.md` and produce self-contained tasks with Gherkin scenarios under `.ai-factory/projects/<slug>/tasks/`, plus `01-epic.md` with a Mermaid task dependency graph (following `.ai-factory/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
+Follow [`factory-plan`](plugin/skills/factory-plan/SKILL.md) after the Design Doc is human-approved. The skill uses the **Planner** to read `.ai-factory/projects/<slug>/00-design.md` and produce self-contained tasks with Gherkin scenarios under `.ai-factory/projects/<slug>/tasks/`, plus `01-epic.md` with a Mermaid task dependency graph (following `.ai-factory/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
 
 **Quality gate: Review and approve the task plan.**
 
@@ -182,7 +182,7 @@ The skill requires `## Task dependency graph` in `01-epic.md` and stops at human
 
 ### Stage 3: Build
 
-For each task (respect dependency ordering from `01-epic.md`), follow [`factory-build`](.ai-factory/framework/skills/factory-build/SKILL.md), for example: *Implement T001 for `<slug>`* or *run the build loop for the next task*.
+For each task (respect dependency ordering from `01-epic.md`), follow [`factory-build`](plugin/skills/factory-build/SKILL.md), for example: *Implement T001 for `<slug>`* or *run the build loop for the next task*.
 
 The skill defines the loop: **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel**; failures get **appended** feedback and another Coder pass; when both pass, results go to the human. Reviewer uses the task path; Verifier uses the task ID and `.ai-factory/config.md` only. Every scenario must map to tests; ordering follows the epic DAG.
 
@@ -196,7 +196,7 @@ After all tasks pass review and verification, the feature is ready for final hum
 
 ### Archiving a project
 
-When a feature has shipped, use the [`factory-archive`](.ai-factory/framework/skills/factory-archive/SKILL.md) skill; more detail in [`reference.md`](.ai-factory/framework/skills/factory-archive/reference.md).
+When a feature has shipped, use the [`factory-archive`](plugin/skills/factory-archive/SKILL.md) skill; more detail in [`reference.md`](plugin/skills/factory-archive/reference.md).
 
 **How to use it.** In Cursor or Claude Code, ask the agent in plain language, for example: *Archive project `my-feature`*, *archive `oauth2`*, or *clean up the factory project for that slug*. The agent follows the skill: it confirms the slug, that the **Design Doc will move** into the archive, and that the `projects/<slug>` tree will be removed.
 
