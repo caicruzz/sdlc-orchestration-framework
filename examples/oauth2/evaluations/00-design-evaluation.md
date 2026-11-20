@@ -4,7 +4,7 @@
 
 | Field | Value |
 |---|---|
-| **Design Doc** | `.ai-factory/examples/oauth2/00-design.md` |
+| **Design Doc** | `examples/oauth2/00-design.md` |
 | **Evaluator** | factory-evaluator |
 | **Date** | 2026-04-21 |
 | **Verdict** | needs-revision |
