@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: polyglot-no-runner
+description: >-
+  Python and Go both with test signals and no task runner: Test stays unfilled with the reason stated, and nothing is composed with &&.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

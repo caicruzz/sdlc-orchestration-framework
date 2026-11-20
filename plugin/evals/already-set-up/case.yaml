@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: already-set-up
+description: >-
+  Already set-up repo with unfilled optional fields and no factory .gitignore lines: the reply says nothing to change and no file is written or edited.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

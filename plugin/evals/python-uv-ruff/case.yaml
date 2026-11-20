@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: python-uv-ruff
+description: >-
+  uv-managed Python project with pytest and ruff configured: Test is uv run pytest and Lint is ruff check .
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

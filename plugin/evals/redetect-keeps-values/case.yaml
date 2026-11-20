@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: redetect-keeps-values
+description: >-
+  Set-up repo with human-chosen Test and Lint values; re-detect may fill unfilled rows but keeps every filled row byte-identical.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

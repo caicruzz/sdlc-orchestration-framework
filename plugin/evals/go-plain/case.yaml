@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: go-plain
+description: >-
+  Plain Go module without golangci config: Test is go test ./... and Lint is go vet ./...
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

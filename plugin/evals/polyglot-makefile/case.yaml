@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: polyglot-makefile
+description: >-
+  Python and Go with a Makefile whose test and lint targets cover both: Test is make test and Lint is make lint.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

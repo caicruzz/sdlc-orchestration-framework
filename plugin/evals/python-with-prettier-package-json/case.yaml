@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: python-with-prettier-package-json
+description: >-
+  Python project plus a tooling-only package.json (Prettier): Python is primary, so Test and Lint are Python commands and never npm ones.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh

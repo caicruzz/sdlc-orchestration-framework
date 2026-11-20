@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: partial-lint-gap
+description: >-
+  Config with Test filled and Lint unfilled: only Lint is proposed and filled (go vet ./...); every other row stays byte-identical.
+plugins: ["../.."]
+context:
+  scaffold_script: fixture.sh
