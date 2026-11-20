@@ -20,15 +20,22 @@ description: >-
 
 1. **`<slug>`** resolved — project directory **`.ai-factory/projects/<slug>/`**
 2. **`00-design.md`** is present and is the **approved** design to plan from
-3. **`.ai-factory/config.md`** is available for agents that need it
+3. **`.ai-factory/config.md`** is available for agents that need it. If **`.ai-factory/config.md`** is missing, **offer to run `factory-setup` first** and continue only after it exists (or the user explicitly declines)
 4. If Stage 1 was skipped out-of-band (e.g. importing a project): ensure **Evaluator** ran and human **explicitly OKs planning** anyway — Stage 3 expects an honest plan from a validated Design Doc
+
+## Templates
+
+Templates are in `templates/` next to this SKILL.md. Paste the template's full content into the subagent prompt under a `Template` heading. The Planner never reads these files itself — files present on disk are not automatically attached to subagent runs, and the installed skill directory may be outside the workspace.
 
 ## Procedure
 
-1. **Invoke the `factory-planner` subagent** with the path to the **approved** Design Doc, e.g. **`.ai-factory/projects/<slug>/00-design.md`** (verbatim path in the Planner invocation prompt)
-2. The Planner **reads the Design Doc only** and produces:
-   - **`01-epic.md`** at **`.ai-factory/projects/<slug>/01-epic.md`**, following **`.ai-factory/templates/epic.md`**
-   - **`tasks/T<id>-<slug-or-name>.md`** under **`.ai-factory/projects/<slug>/tasks/`**, one file per task, following **`.ai-factory/templates/task.md`**
+1. **Read** **`templates/epic.md`** and **`templates/task.md`** next to this SKILL.md.
+2. **Invoke the `factory-planner` subagent** with a prompt that contains:
+   - the path to the **approved** Design Doc, e.g. **`.ai-factory/projects/<slug>/00-design.md`** (verbatim path)
+   - the full content of **both** **`templates/epic.md`** and **`templates/task.md`**, pasted under a **`Template`** heading (the Planner stops if its prompt has no `Template` section)
+3. The Planner **reads the Design Doc only** and produces:
+   - **`01-epic.md`** at **`.ai-factory/projects/<slug>/01-epic.md`**, following the pasted epic template
+   - **`tasks/T<id>-<slug-or-name>.md`** under **`.ai-factory/projects/<slug>/tasks/`**, one file per task, following the pasted task template
 
 ### Epic and graph (required shape)
 
@@ -45,9 +52,9 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 - Each task carries **Given/When/Then** scenarios the Coder maps to tests
 - Dependencies and interfaces between tasks are explicit in the task body
 
-3. **Human quality gate — required:** **Wait for explicit human approval** of the task plan (epic + tasks + graph) before any **Stage 3** implementation work
+4. **Human quality gate — required:** **Wait for explicit human approval** of the task plan (epic + tasks + graph) before any **Stage 3** implementation work
 
-4. **Stop** this skill. Next step: **[`factory-build`](../factory-build/SKILL.md)** — tasks in **dependency order** (Coder → parallel Review + Verify).
+5. **Stop** this skill. Next step: **[`factory-build`](../factory-build/SKILL.md)** — tasks in **dependency order** (Coder → parallel Review + Verify).
 
 ## What you must not do in Stage 2
 
@@ -59,13 +66,12 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 | Omit **`## Task dependency graph`** or **Mermaid** that matches all tasks | Required for ordering and parallel work |
 
 ## Invoking subagents
-
-The subagents live in `.cursor/agents/` and `.claude/agents/`; both are generated from `.ai-factory/framework/agents/` by `.ai-factory/sync.sh`. Wherever this skill says *invoke the `factory-<name>` subagent*:
-
-- **Cursor** — delegate to the subagent by name (e.g. `/factory-<name> <input>`).
-- **Claude Code** — call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
-
-Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
+Wherever this skill says *invoke the `factory-<name>` subagent*:
+- **Cursor**: delegate by name, e.g. `/factory-<name> <input>`.
+- **Claude Code**: call the Agent tool with `subagent_type: factory-<name>`.
+The installed agents live in `~/.claude/agents/`; a project `.claude/agents/factory-<name>.md`
+overrides one by each tool's own precedence. Pass only the inputs this skill names
+(paths, task IDs, inlined template content).
 
 ## Quick reference
 
@@ -74,8 +80,8 @@ Pass **only** the inputs this skill names (paths, task IDs) — subagents do not
 | Epic + graph | `.ai-factory/projects/<slug>/01-epic.md` |
 | Task files | `.ai-factory/projects/<slug>/tasks/T<id>-<suffix>.md` |
 | Design Doc (read-only input) | `.ai-factory/projects/<slug>/00-design.md` |
-| Epic template | `.ai-factory/templates/epic.md` |
-| Task template | `.ai-factory/templates/task.md` |
+| Epic template | `templates/epic.md` (next to this SKILL.md) |
+| Task template | `templates/task.md` (next to this SKILL.md) |
 
 **Next stage:** **`factory-build`** — Coder, then parallel Reviewer + Verifier, per task following the epic graph.
 
