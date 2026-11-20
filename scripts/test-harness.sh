@@ -9,7 +9,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 REPO_ROOT=$(pwd -P)
-TMP_ROOT=$(mktemp -d "${TMPDIR:-/tmp}/test-harness.XXXXXX")
+TMP_ROOT=$(cd "$(mktemp -d "${TMPDIR:-/tmp}/test-harness.XXXXXX")" && pwd -P)
 trap 'rm -rf "$TMP_ROOT"' EXIT
 
 CONFIG=".ai-factory/config.md"
@@ -37,6 +37,14 @@ new_sandbox() {
 plant() {
   printf '%s\n' "$2" >"$1"
   chmod +x "$1"
+}
+
+# stub_shellcheck <dir>: install a pass-through shellcheck in <dir>/.stub and
+# print a PATH that finds it first.
+stub_shellcheck() {
+  mkdir -p "$1/.stub"
+  plant "$1/.stub/shellcheck" "exit 0"
+  printf '%s\n' "$1/.stub:$PATH"
 }
 
 # run_in <cwd> <command...>: run a command from <cwd>, capture output and code.
@@ -122,17 +130,12 @@ scenario_run_evals_never_picked_up() {
 # --- Feature: One lint command ----------------------------------------------
 
 # Scenario: Lints every shell script in the repo (bash -n half)
-# Uses real shellcheck when installed; otherwise a pass-through stub so the
-# failure can only come from `bash -n`.
+# A pass-through stub always replaces shellcheck here, so the planted
+# syntax error can only be caught by lint.sh's `bash -n` step.
 scenario_lint_fails_on_syntax_error() {
   local sb path
   sb=$(new_sandbox lint-syntax)
-  path="$PATH"
-  if ! command -v shellcheck >/dev/null 2>&1; then
-    mkdir -p "$sb/.stub"
-    plant "$sb/.stub/shellcheck" "exit 0"
-    path="$sb/.stub:$PATH"
-  fi
+  path=$(stub_shellcheck "$sb")
   mkdir -p "$sb/nested"
   plant "$sb/nested/good.sh" '#!/usr/bin/env bash
 echo "fine"'
@@ -144,7 +147,9 @@ echo "fine"'
 if then fi'
   run_in "$TMP_ROOT" env PATH="$path" "$BASH" "$sb/scripts/lint.sh"
   [ "$RC" -ne 0 ] || fail "expected non-zero exit for syntax error: $OUT" || return 1
-  contains "broken.sh" || fail "output does not name broken.sh: $OUT" || return 1
+  contains "FAIL bash -n nested/broken.sh" ||
+    fail "output does not report the bash -n failure for nested/broken.sh: $OUT" || return 1
+  if contains "FAIL shellcheck"; then fail "stubbed shellcheck should not fail: $OUT"; return 1; fi
 }
 
 # Scenario: Lints every shell script in the repo (shellcheck half)
@@ -195,6 +200,23 @@ scenario_lint_without_shellcheck() {
   [ "$RC" -ne 0 ] || fail "expected non-zero exit without shellcheck: $OUT" || return 1
   contains "shellcheck is not installed (macOS: brew install shellcheck; Debian/Ubuntu: apt-get install shellcheck)" ||
     fail "missing install hint: $OUT" || return 1
+}
+
+# Scenario: Lints every shell script in the repo (outside a git work tree the
+# file list cannot be trusted, so lint.sh fails instead of passing silently)
+scenario_lint_fails_outside_git_work_tree() {
+  local dir path
+  dir="$TMP_ROOT/no-git"
+  mkdir -p "$dir/scripts"
+  cp "$REPO_ROOT/scripts/lint.sh" "$dir/scripts/"
+  plant "$dir/broken.sh" 'if then fi'
+  path=$(stub_shellcheck "$dir")
+
+  # Stop git from discovering any repository above the temp root.
+  run_in "$dir" env PATH="$path" GIT_CEILING_DIRECTORIES="$TMP_ROOT" "$BASH" scripts/lint.sh
+  [ "$RC" -ne 0 ] || fail "expected non-zero exit outside a git work tree: $OUT" || return 1
+  contains "must run inside a git work tree" || fail "missing git work tree message: $OUT" || return 1
+  if contains "no shell scripts to lint"; then fail "reported nothing to lint: $OUT"; return 1; fi
 }
 
 # --- Feature: This repo's config --------------------------------------------
@@ -294,6 +316,7 @@ scenario_lint_fails_on_syntax_error
 scenario_lint_fails_on_shellcheck_warning
 scenario_lint_skips_ignored_files
 scenario_lint_without_shellcheck
+scenario_lint_fails_outside_git_work_tree
 scenario_template_is_blank
 scenario_config_points_verifier_at_runners
 scenario_configured_lint_passes
