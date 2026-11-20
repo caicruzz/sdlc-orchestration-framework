@@ -173,6 +173,45 @@ if then fi'
   if contains "FAIL shellcheck"; then fail "stubbed shellcheck should not fail: $OUT"; return 1; fi
 }
 
+# Scenario: Lints every shell script in the repo (names git would C-quote, such
+# as ones with a double quote or a tab, are linted too). shellcheck is stubbed
+# so only `bash -n` can catch the planted syntax errors.
+scenario_lint_covers_quoted_file_names() {
+  local sb path quoted tabbed
+  sb=$(new_sandbox lint-quoted)
+  path=$(stub_shellcheck "$sb")
+  quoted='we"ird.sh'
+  tabbed=$(printf 'tab\there.sh')
+  plant "$sb/$quoted" 'if then fi'
+  plant "$sb/$tabbed" 'if then fi'
+
+  run_in "$sb" env PATH="$path" "$BASH" scripts/lint.sh
+  [ "$RC" -ne 0 ] || fail "expected non-zero exit for broken scripts with quoted names: $OUT" || return 1
+  contains "FAIL bash -n $quoted" || fail "script named '$quoted' was not linted: $OUT" || return 1
+  contains "FAIL bash -n $tabbed" || fail "script with a tab in its name was not linted: $OUT" || return 1
+}
+
+# Scenario: Lints every shell script in the repo (a `git ls-files` failure
+# fails the run instead of reading as an empty list)
+scenario_lint_fails_when_git_ls_files_fails() {
+  local sb path real_git
+  sb=$(new_sandbox lint-ls-files)
+  path=$(stub_shellcheck "$sb")
+  real_git=$(command -v git)
+  # Pass everything through to git except ls-files, which fails.
+  plant "$sb/.stub/git" "#!/bin/sh
+for a in \"\$@\"; do
+  [ \"\$a\" = ls-files ] && exit 1
+done
+exec '$real_git' \"\$@\""
+
+  run_in "$sb" env PATH="$path" "$BASH" scripts/lint.sh
+  [ "$RC" -ne 0 ] || fail "expected non-zero exit when git ls-files fails: $OUT" || return 1
+  contains "git ls-files failed; cannot list shell scripts to lint" ||
+    fail "missing git ls-files failure message: $OUT" || return 1
+  if contains "no shell scripts to lint"; then fail "reported nothing to lint: $OUT"; return 1; fi
+}
+
 # Scenario: Lints every shell script in the repo (shellcheck half)
 scenario_lint_fails_on_shellcheck_warning() {
   local sb
@@ -364,6 +403,8 @@ scenario_failing_script_does_not_stop_others
 scenario_no_tests_is_failure
 scenario_run_evals_never_picked_up
 scenario_lint_fails_on_syntax_error
+scenario_lint_covers_quoted_file_names
+scenario_lint_fails_when_git_ls_files_fails
 scenario_lint_fails_on_shellcheck_warning
 scenario_lint_skips_ignored_files
 scenario_lint_without_shellcheck

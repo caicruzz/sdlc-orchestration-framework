@@ -18,21 +18,27 @@ if [ "$(git rev-parse --is-inside-work-tree 2>/dev/null || true)" != "true" ]; t
   echo "lint.sh must run inside a git work tree: $(pwd -P) is not one" >&2
   exit 1
 fi
-# Capture the list in a variable so a git failure is caught here (a failure
-# inside process substitution would be invisible to set -e). Newline-separated:
-# no repository file name contains a newline.
-if ! list=$(git -c core.quotePath=false ls-files -co --exclude-standard -- '*.sh'); then
+# NUL-delimited (-z) so git never C-quotes a name (quotes, backslashes, tabs,
+# control characters) and every listed file is linted. The list goes to a temp
+# file so git's exit status is checked here (a failure inside process
+# substitution would be invisible to set -e). Bare assignment: a mktemp
+# failure stops the run; the trap is installed only for a real file.
+list_file=$(mktemp "${TMPDIR:-/tmp}/lint.XXXXXX")
+if [ -z "$list_file" ] || [ ! -f "$list_file" ]; then
+  echo "mktemp did not create a file list; cannot lint" >&2
+  exit 1
+fi
+trap 'rm -f "$list_file"' EXIT
+if ! git ls-files -co --exclude-standard -z -- '*.sh' >"$list_file"; then
   echo "git ls-files failed; cannot list shell scripts to lint" >&2
   exit 1
 fi
 
 files=()
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
   # A tracked file deleted from the working tree is still listed; skip it.
-  [ -n "$f" ] && [ -f "$f" ] && files+=("$f")
-done <<EOF
-$list
-EOF
+  if [ -n "$f" ] && [ -f "$f" ]; then files+=("$f"); fi
+done <"$list_file"
 
 if [ "${#files[@]}" -eq 0 ]; then
   echo "no shell scripts to lint"
