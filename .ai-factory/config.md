@@ -12,7 +12,7 @@ The Architect, Planner, Coder, Reviewer, and Verifier agents all read this file.
 
 ## Project Structure
 
-- **Source directory**: `plugin/` (from a later task on; `.ai-factory/framework/` until then)
+- **Source directory**: `plugin/`
 - **Test directory**: `scripts/test-*.sh`
 - **Entry point**: <!-- e.g. src/index.ts -->
 - **Config files**: <!-- e.g. tsconfig.json, .eslintrc.js, pyproject.toml -->

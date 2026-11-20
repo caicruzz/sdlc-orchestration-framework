@@ -65,9 +65,10 @@ scenario_skills_move_to_plugin() {
 }
 
 # Scenario: Each template is copied next to the one skill that uses it
+# (T010 retired the originals, so only the copies are checked here.)
 scenario_templates_copied_next_to_skills() {
   echo "# Each template is copied next to the one skill that uses it"
-  local pair skill name copy src
+  local pair skill name copy
   for pair in \
     factory-design:design factory-design:evaluation \
     factory-plan:epic factory-plan:task \
@@ -75,23 +76,17 @@ scenario_templates_copied_next_to_skills() {
     skill=${pair%%:*}
     name=${pair#*:}
     copy="plugin/skills/$skill/templates/$name.md"
-    src=".ai-factory/templates/$name.md"
-    if [ -f "$copy" ] && [ -f "$src" ] && cmp -s "$copy" "$src"; then
-      ok "$copy is byte-identical to $src"
-    else
-      bad "$copy is byte-identical to $src"
-    fi
+    check "$copy exists" test -f "$copy"
   done
   check "factory-archive has no templates/" absent plugin/skills/factory-archive/templates
 }
 
-# Scenario: The original templates stay for the factory that is running now
-scenario_original_templates_stay() {
-  echo "# The original templates stay for the factory that is running now"
-  local name
-  for name in design evaluation epic task review verify; do
-    check ".ai-factory/templates/$name.md exists" test -f ".ai-factory/templates/$name.md"
-  done
+# Scenario (T010): .ai-factory/templates/ is deleted
+scenario_vendored_templates_deleted() {
+  echo "# .ai-factory/templates/ is deleted"
+  check ".ai-factory/templates/ is gone" absent .ai-factory/templates
+  check ".ai-factory/projects/ is still a directory" test -d .ai-factory/projects
+  check ".ai-factory/archive/ is still a directory" test -d .ai-factory/archive
 }
 
 # Scenario: The setup skill's config template is left alone
@@ -195,7 +190,7 @@ EOF
 scenario_agents_move_to_plugin
 scenario_skills_move_to_plugin
 scenario_templates_copied_next_to_skills
-scenario_original_templates_stay
+scenario_vendored_templates_deleted
 scenario_setup_config_template_left_alone
 scenario_plugin_top_level
 scenario_example_moves_to_root

@@ -1,0 +1,34 @@
+# Runs the same command the Verifier runs (scripts/test.sh: check.sh and every
+# scripts/test-*.sh) on Linux and on macOS's /bin/bash 3.2, plus shellcheck.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: |
+          if ! command -v shellcheck >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y shellcheck
+          fi
+      - name: Test
+        run: bash scripts/test.sh
+      - name: Lint
+        run: bash scripts/lint.sh
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test (bash 3.2)
+        run: /bin/bash scripts/test.sh

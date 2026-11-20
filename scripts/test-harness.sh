@@ -347,6 +347,10 @@ EOF
 # Scenario: Config points the Verifier at the runners
 scenario_config_points_verifier_at_runners() {
   local labels expected needle
+  # T010: the transitional note naming the retired framework path is gone.
+  # shellcheck disable=SC2016 # backticks are literal Markdown
+  grep -qxF -- '- **Source directory**: `plugin/`' "$CONFIG" ||
+    fail "config Source directory is not exactly \`plugin/\`" || return 1
   labels=$(grep -E '^\| \*\*' "$CONFIG" | sed -E 's/^\| \*\*([^*]+)\*\*.*/\1/' | tr '\n' ',')
   expected="Install,Test,Lint,Type check,Build,Format,"
   [ "$labels" = "$expected" ] || fail "config Commands labels '$labels' != '$expected'" || return 1
@@ -365,7 +369,6 @@ scenario_config_points_verifier_at_runners() {
 - **Runtime**: bash 3.2+ (macOS `/bin/bash`)
 - **Framework**: Claude Code and Cursor skills and subagents
 - **Package Manager**: none
-- **Source directory**: `plugin/` (from a later task on; `.ai-factory/framework/` until then)
 - **Test directory**: `scripts/test-*.sh`
 | **Install** | `brew install shellcheck` (macOS) or `apt-get install shellcheck` |
 | **Test** | `/bin/bash scripts/test.sh` |
