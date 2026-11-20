@@ -21,14 +21,21 @@ description: >-
 ## Preconditions
 
 1. **Resolve `<slug>`** with the user if unclear — kebab-case folder name under **`.ai-factory/projects/<slug>/`**
-2. Ensure **`.ai-factory/config.md`** (or project config) is available to agents that need it; the Architect references project conventions
-3. Design Docs use the template at **`.ai-factory/templates/design.md`**
+2. Ensure **`.ai-factory/config.md`** is available to agents that need it; the Architect references project conventions. If **`.ai-factory/config.md`** is missing in the repo, **offer to run `factory-setup` first** and continue only after it exists (or the user explicitly declines)
+3. Design Docs use the template at **`templates/design.md`** next to this SKILL.md
+
+## Templates
+
+Templates are in `templates/` next to this SKILL.md. Paste the template's full content into the subagent prompt under a `Template` heading. For the evaluation report (**`templates/evaluation.md`**), no subagent gets the template: shape the returned report with it when persisting. Subagents never read these files themselves — files present on disk are not automatically attached to subagent runs, and the installed skill directory may be outside the workspace.
 
 ## Path A — No Design Doc exists
 
-1. **Invoke the `factory-architect` subagent** with the feature request, requirements, or a path to a requirements document.
-   - **Include** the path **`.ai-factory/templates/design.md`** explicitly in the invocation prompt so the Architect reads the template: **files present on disk are not automatically attached** to subagent runs.
-2. The Architect reads **`design.md`**, preserves its structure verbatim in **`00-design.md`**, explores the codebase, and fills placeholders.
+1. **Read** **`templates/design.md`** next to this SKILL.md.
+2. **Invoke the `factory-architect` subagent** with a prompt that contains:
+   - the feature request, requirements, or a path to a requirements document
+   - the output path **`.ai-factory/projects/<slug>/00-design.md`**
+   - the full content of **`templates/design.md`**, pasted under a **`Template`** heading (the Architect stops if its prompt has no `Template` section)
+3. The Architect preserves the pasted template's structure verbatim in **`00-design.md`**, explores the codebase, and fills placeholders.
 
 ## Path B — Design Doc already exists
 
@@ -41,9 +48,11 @@ description: >-
 **Never skip the Evaluator** for any Design Doc, whether from Path A, Path B, or a revision loop.
 
 1. **Invoke the `factory-evaluator` subagent** with the Design Doc path: **`.ai-factory/projects/<slug>/00-design.md`**
+   - The Evaluator prompt includes **no template** — only the Design Doc path
 2. The Evaluator **critically** examines the Design Doc (flaws, blind spots, trade-offs, gaps) and returns a **structured evaluation** with a **verdict**
 3. **Persist** the full evaluation: write it to **`.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`**
    - The Evaluator is **readonly** — it only returns text; the **main agent** (or this workflow) is responsible for saving that text to the file
+   - Read **`templates/evaluation.md`** next to this SKILL.md and shape the returned report with it when persisting (keep the Evaluator's findings and verdict; fit them to the template's sections)
 4. **If the verdict** is `needs-revision` or `blocked`:
    - Present the evaluation to the human clearly
    - **Wait** for the human to revise the Design Doc (or direct changes)
@@ -62,13 +71,12 @@ description: >-
 | Let the **Evaluator** write files on disk | Readonly; main agent persists evaluation |
 
 ## Invoking subagents
-
-The subagents live in `.cursor/agents/` and `.claude/agents/`; both are generated from `.ai-factory/framework/agents/` by `.ai-factory/sync.sh`. Wherever this skill says *invoke the `factory-<name>` subagent*:
-
-- **Cursor** — delegate to the subagent by name (e.g. `/factory-<name> <input>`).
-- **Claude Code** — call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
-
-Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
+Wherever this skill says *invoke the `factory-<name>` subagent*:
+- **Cursor**: delegate by name, e.g. `/factory-<name> <input>`.
+- **Claude Code**: call the Agent tool with `subagent_type: factory-<name>`.
+The installed agents live in `~/.claude/agents/`; a project `.claude/agents/factory-<name>.md`
+overrides one by each tool's own precedence. Pass only the inputs this skill names
+(paths, task IDs, inlined template content).
 
 ## Quick reference
 
@@ -81,7 +89,8 @@ Pass **only** the inputs this skill names (paths, task IDs) — subagents do not
 |----------|------|
 | Design Doc | `.ai-factory/projects/<slug>/00-design.md` |
 | Persisted evaluation | `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md` |
-| Design Doc template | `.ai-factory/templates/design.md` |
+| Design Doc template | `templates/design.md` (next to this SKILL.md) |
+| Evaluation template | `templates/evaluation.md` (next to this SKILL.md) |
 
 **Next stage:** after human approval → **[`factory-plan`](../factory-plan/SKILL.md)** — **`factory-planner`**
 
