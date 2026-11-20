@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # T007 tests: install.sh (install, upgrade, link mode, uninstall).
+# T008 tests: install.sh destination warnings (CLAUDE_CONFIG_DIR, symlinked
+# destinations, old ~/.cursor copies).
 #
 # Isolation: every case runs against a temporary copy of this repository
 # (tracked and untracked-but-not-ignored files, committed once as a clean git
@@ -14,6 +16,9 @@ set -euo pipefail
 
 repo="$(cd "$(dirname "$0")/.." && pwd -P)"
 real_home="$HOME"
+# The caller's CLAUDE_CONFIG_DIR must not affect any case: cases that need it
+# set it on one invocation only (run_install_cfg).
+unset CLAUDE_CONFIG_DIR
 
 tmp_root="${TMPDIR:-/tmp}"
 tmp_root="${tmp_root%/}"
@@ -130,11 +135,30 @@ run_install() {
   shift
   guard_home "$case_home"
   RC=0
-  OUT="$(HOME="$case_home" "$copy/install.sh" "$@" 2>&1)" || RC=$?
+  # CLAUDE_CONFIG_DIR is removed here too, so even an exported value can
+  # never reach a case that needs it absent.
+  OUT="$(env -u CLAUDE_CONFIG_DIR HOME="$case_home" "$copy/install.sh" "$@" 2>&1)" || RC=$?
+}
+
+# run_install_cfg <case_home> <CLAUDE_CONFIG_DIR value> [args...]: like
+# run_install, with CLAUDE_CONFIG_DIR set for this one invocation.
+run_install_cfg() {
+  local case_home="$1" cfg="$2"
+  shift 2
+  guard_home "$case_home"
+  RC=0
+  OUT="$(CLAUDE_CONFIG_DIR="$cfg" HOME="$case_home" "$copy/install.sh" "$@" 2>&1)" || RC=$?
 }
 
 contains() { case "$OUT" in *"$1"*) return 0 ;; esac; return 1; }
 lacks() { ! contains "$1"; }
+# in_text <text> <needle>
+in_text() { case "$1" in *"$2"*) return 0 ;; esac; return 1; }
+# count_of <needle>: number of lines of $OUT that contain <needle>.
+count_of() { printf '%s\n' "$OUT" | grep -cF -- "$1" || true; }
+# first_line_starts <prefix>: the first line of $OUT starts with <prefix>, so
+# nothing (no report line) was printed before it.
+first_line_starts() { case "${OUT%%$'\n'*}" in "$1"*) return 0 ;; esac; return 1; }
 is_empty_dir() { [ -d "$1" ] && [ -z "$(entries "$1")" ]; }
 
 # tree_sig <dir>: names, types and checksums under <dir>, without following
@@ -722,6 +746,243 @@ scenario_uninstall() {
     "$(tree_sig "$h/.claude/agents" | grep -v factory-)$(tree_sig "$h/.claude/skills" | grep -v factory-)" = "$before"
 }
 
+# --- T008: destination warnings ------------------------------------------------
+
+CURSOR_WARNING="these take priority over this install in Cursor; remove them"
+
+# cfg_warning <CLAUDE_CONFIG_DIR value>: the sentence the warning must contain.
+cfg_warning() { printf 'Claude Code reads %s, so it will not see this install; Cursor will' "$1"; }
+
+# Scenario: CLAUDE_CONFIG_DIR points elsewhere
+scenario_cfg_elsewhere() {
+  echo "# CLAUDE_CONFIG_DIR points elsewhere"
+  local h cfg
+  h="$(new_home)"
+  cfg="$h/other-config"
+  mkdir -p "$cfg"
+  run_install_cfg "$h" "$cfg"
+  check "existing dir: exits 0" test "$RC" -eq 0
+  check "existing dir: warns that Claude Code reads CLAUDE_CONFIG_DIR" contains "$(cfg_warning "$cfg")"
+  check "existing dir: the warning names both paths" contains "CLAUDE_CONFIG_DIR is $cfg, not $h/.claude"
+  check "existing dir: the warning is printed before anything else" first_line_starts "warning: CLAUDE_CONFIG_DIR is $cfg"
+  check "existing dir: the install goes to \$HOME/.claude" installed_matches "$h"
+  check "existing dir: CLAUDE_CONFIG_DIR gains nothing" is_empty_dir "$cfg"
+  check "existing dir: HOME holds only .claude and the config dir" test "$(entries "$h")" = ".claude other-config"
+
+  h="$(new_home)"
+  cfg="$h/missing-config"
+  run_install_cfg "$h" "$cfg"
+  check "missing dir: exits 0" test "$RC" -eq 0
+  check "missing dir: warns that Claude Code reads CLAUDE_CONFIG_DIR" contains "$(cfg_warning "$cfg")"
+  check "missing dir: the warning is printed before anything else" first_line_starts "warning: CLAUDE_CONFIG_DIR is $cfg"
+  check "missing dir: the install goes to \$HOME/.claude" installed_matches "$h"
+  check "missing dir: CLAUDE_CONFIG_DIR is not created" gone "$cfg"
+}
+
+# Scenario: CLAUDE_CONFIG_DIR points at the default location
+scenario_cfg_default() {
+  echo "# CLAUDE_CONFIG_DIR points at the default location"
+  local h cfg label
+  for label in "exact, before install" "trailing slashes, before install" \
+    "exact, after install" "trailing slash, after install" "symlink" "symlink with trailing slash"; do
+    h="$(new_home)"
+    case "$label" in
+      "exact, before install") cfg="$h/.claude" ;;
+      "trailing slashes, before install") cfg="$h/.claude//" ;;
+      "exact, after install")
+        mkdir -p "$h/.claude"
+        cfg="$h/.claude"
+        ;;
+      "trailing slash, after install")
+        mkdir -p "$h/.claude"
+        cfg="$h/.claude/"
+        ;;
+      "symlink")
+        mkdir -p "$h/.claude"
+        ln -s "$h/.claude" "$h/cfg-link"
+        cfg="$h/cfg-link"
+        ;;
+      "symlink with trailing slash")
+        mkdir -p "$h/.claude"
+        ln -s "$h/.claude" "$h/cfg-link"
+        cfg="$h/cfg-link/"
+        ;;
+    esac
+    run_install_cfg "$h" "$cfg"
+    check "$label: exits 0" test "$RC" -eq 0
+    check "$label: no CLAUDE_CONFIG_DIR warning" lacks "CLAUDE_CONFIG_DIR"
+    check "$label: no warning at all" lacks "warning"
+    check "$label: installs into \$HOME/.claude" installed_matches "$h"
+  done
+}
+
+# Scenario: The skills or agents directory is a symlink
+scenario_symlinked_destination() {
+  echo "# The skills or agents directory is a symlink"
+  local h kind target n
+  for kind in skills agents; do
+    h="$(new_home)"
+    mkdir -p "$h/dotfiles/$kind" "$h/.claude"
+    ln -s "$h/dotfiles/$kind" "$h/.claude/$kind"
+    target="$(cd "$h/dotfiles/$kind" && pwd -P)"
+    run_install "$h"
+    check "$kind: exits 0" test "$RC" -eq 0
+    check "$kind: warns with the resolved symlink target" contains "$h/.claude/$kind is a symlink to $target"
+    check "$kind: the warning is printed before anything else" first_line_starts "warning: $h/.claude/$kind is a symlink"
+    check "$kind: \$HOME/.claude/$kind is still the same symlink" is_link_to "$h/.claude/$kind" "$h/dotfiles/$kind"
+    if [ "$kind" = skills ]; then
+      for n in $SKILLS; do
+        check "skills: $n lands in the symlink target" test -d "$h/dotfiles/skills/$n" -a ! -L "$h/dotfiles/skills/$n"
+      done
+    else
+      for n in $AGENTS; do
+        check "agents: $n lands in the symlink target" test -f "$h/dotfiles/agents/$n" -a ! -L "$h/dotfiles/agents/$n"
+      done
+    fi
+    check "$kind: the full set is installed" installed_matches "$h"
+  done
+}
+
+# Scenario: Old Cursor copies would take priority
+scenario_cursor_copies() {
+  echo "# Old Cursor copies would take priority"
+  local h before nl=$'\n'
+  h="$(new_home)"
+  mkdir -p "$h/.cursor/agents" "$h/.cursor/skills/factory-old"
+  echo old >"$h/.cursor/agents/factory-x.md"
+  echo old >"$h/.cursor/skills/factory-old/SKILL.md"
+  echo mine >"$h/.cursor/agents/mine.md"
+  before="$(tree_sig "$h/.cursor")"
+  run_install "$h"
+  check "agent and skill: exits 0" test "$RC" -eq 0
+  check "agent and skill: prints the Cursor warning" contains "$CURSOR_WARNING"
+  check "agent and skill: the warning is followed by each path" \
+    contains "$CURSOR_WARNING:$nl  $h/.cursor/agents/factory-x.md$nl  $h/.cursor/skills/factory-old$nl"
+  check "agent and skill: the warning is printed before anything else" first_line_starts "warning: $CURSOR_WARNING"
+  check "agent and skill: a non-factory Cursor file is not listed" lacks "$h/.cursor/agents/mine.md"
+  check "agent and skill: \$HOME/.cursor is byte-identical" test "$(tree_sig "$h/.cursor")" = "$before"
+  check "agent and skill: the install completes" installed_matches "$h"
+
+  h="$(new_home)"
+  mkdir -p "$h/.cursor/skills" "$h/elsewhere"
+  ln -s "$h/elsewhere" "$h/.cursor/skills/factory-linked"
+  before="$(tree_sig "$h/.cursor")"
+  run_install "$h"
+  check "skill symlink only: exits 0" test "$RC" -eq 0
+  check "skill symlink only: the warning lists the path" \
+    contains "$CURSOR_WARNING:$nl  $h/.cursor/skills/factory-linked$nl"
+  check "skill symlink only: \$HOME/.cursor is byte-identical" test "$(tree_sig "$h/.cursor")" = "$before"
+  check "skill symlink only: the install completes" installed_matches "$h"
+}
+
+# Scenario: No warning conditions
+scenario_no_warnings() {
+  echo "# No warning conditions"
+  local h
+  h="$(new_home)"
+  run_install "$h"
+  check "first install: exits 0" test "$RC" -eq 0
+  check "first install: no warning" lacks "warning"
+  check "first install: no repeated-warnings section" lacks "Warnings and notices"
+  mkdir -p "$h/.cursor/agents"
+  echo mine >"$h/.cursor/agents/mine.md"
+  run_install "$h"
+  check "re-run with only non-factory Cursor files: exits 0" test "$RC" -eq 0
+  check "re-run with only non-factory Cursor files: no warning" lacks "warning"
+  run_install "$h" --uninstall
+  check "uninstall: exits 0" test "$RC" -eq 0
+  check "uninstall: no warning" lacks "warning"
+}
+
+# Scenario: Warnings are repeated in the final report
+scenario_warnings_repeated() {
+  echo "# Warnings are repeated in the final report"
+  local h cfg target report text
+  h="$(new_home)"
+  cfg="$h/other-config"
+  mkdir -p "$cfg" "$h/dotfiles/skills" "$h/.claude" "$h/.cursor/agents"
+  ln -s "$h/dotfiles/skills" "$h/.claude/skills"
+  target="$(cd "$h/dotfiles/skills" && pwd -P)"
+  run_install "$h"
+  echo mine >"$h/.claude/agents/factory-mine.md"
+  echo old >"$h/.cursor/agents/factory-x.md"
+  run_install_cfg "$h" "$cfg"
+  check "install: exits 0" test "$RC" -eq 0
+  report="${OUT#*soloAIfactory installed into}"
+  check "install: the report has a repeated-warnings section" in_text "$report" "Warnings and notices (repeated from above):"
+  for text in "$(cfg_warning "$cfg")" \
+    "$h/.claude/skills is a symlink to $target" \
+    "$CURSOR_WARNING" \
+    "$h/.cursor/agents/factory-x.md" \
+    "$h/.claude/agents/factory-mine.md: not installed by soloAIfactory; left in place"; do
+    check "install: printed once before and once in the report: $text" test "$(count_of "$text")" -eq 2
+    check "install: the report repeats: $text" in_text "$report" "$text"
+  done
+
+  run_install_cfg "$h" "$cfg" --uninstall
+  check "uninstall: exits 0" test "$RC" -eq 0
+  report="${OUT#*soloAIfactory uninstalled from}"
+  for text in "$(cfg_warning "$cfg")" \
+    "$CURSOR_WARNING" \
+    "$h/.cursor/agents/factory-x.md" \
+    "$h/.claude/agents/factory-mine.md: not installed by soloAIfactory; left in place"; do
+    check "uninstall: printed once before and once in the report: $text" test "$(count_of "$text")" -eq 2
+    check "uninstall: the report repeats: $text" in_text "$report" "$text"
+  done
+}
+
+# Scenario: Uninstall warns the same way
+scenario_uninstall_warns() {
+  echo "# Uninstall warns the same way"
+  local h before nl=$'\n'
+  h="$(new_home)"
+  run_install "$h"
+  mkdir -p "$h/.cursor/agents"
+  echo old >"$h/.cursor/agents/factory-x.md"
+  before="$(tree_sig "$h/.cursor")"
+  run_install "$h" --uninstall
+  check "installed: exits 0" test "$RC" -eq 0
+  check "installed: prints the Cursor warning with the path" \
+    contains "$CURSOR_WARNING:$nl  $h/.cursor/agents/factory-x.md$nl"
+  check "installed: the warning is printed before anything else" first_line_starts "warning: $CURSOR_WARNING"
+  check "installed: \$HOME/.cursor is untouched" test "$(tree_sig "$h/.cursor")" = "$before"
+  check "installed: the factory set is removed" nothing_installed "$h"
+
+  h="$(new_home)"
+  mkdir -p "$h/.cursor/agents"
+  echo old >"$h/.cursor/agents/factory-x.md"
+  before="$(tree_sig "$h/.cursor")"
+  run_install "$h" --uninstall
+  check "not installed: exits 0" test "$RC" -eq 0
+  check "not installed: prints the Cursor warning with the path" \
+    contains "$CURSOR_WARNING:$nl  $h/.cursor/agents/factory-x.md$nl"
+  check "not installed: says soloAIfactory is not installed" contains "soloAIfactory is not installed"
+  check "not installed: \$HOME/.cursor is untouched" test "$(tree_sig "$h/.cursor")" = "$before"
+  check "not installed: no .claude is created" gone "$h/.claude"
+}
+
+# Scenario: New cases use the existing harness
+scenario_warning_isolation() {
+  echo "# New cases use the existing harness"
+  local h out
+  check "the harness runs with CLAUDE_CONFIG_DIR unset" test -z "${CLAUDE_CONFIG_DIR+x}"
+  h="$(new_home)"
+  run_install_cfg "$h" "$h/other-config"
+  check "run_install_cfg sets CLAUDE_CONFIG_DIR for that invocation" contains "$(cfg_warning "$h/other-config")"
+  check "run_install_cfg does not leave CLAUDE_CONFIG_DIR set" test -z "${CLAUDE_CONFIG_DIR+x}"
+  h="$(new_home)"
+  out="$(
+    CLAUDE_CONFIG_DIR=/nonexistent/caller-config
+    export CLAUDE_CONFIG_DIR
+    run_install "$h"
+    printf '%s' "$OUT"
+  )"
+  OUT="$out"
+  check "a caller's exported CLAUDE_CONFIG_DIR does not reach run_install" lacks "CLAUDE_CONFIG_DIR"
+  check "every case HOME is under the temporary directory" \
+    test -z "$(grep -v "^$tmp_root/sif-home\." "$tmp/homes" || true)"
+}
+
 # Scenario: Tests run only against a temporary copy and a temporary HOME
 scenario_test_isolation() {
   echo "# Tests run only against a temporary copy and a temporary HOME"
@@ -792,6 +1053,14 @@ for scenario in \
   scenario_link_then_uninstall \
   scenario_leftover_staging \
   scenario_uninstall \
+  scenario_cfg_elsewhere \
+  scenario_cfg_default \
+  scenario_symlinked_destination \
+  scenario_cursor_copies \
+  scenario_no_warnings \
+  scenario_warnings_repeated \
+  scenario_uninstall_warns \
+  scenario_warning_isolation \
   scenario_adapters_removed \
   scenario_installer_executable \
   scenario_shellcheck; do

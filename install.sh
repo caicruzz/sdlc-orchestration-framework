@@ -17,6 +17,12 @@
 # nothing that is not a factory-* entry under $HOME/.claude/agents or
 # $HOME/.claude/skills (plus its own stamp and staging directory). Removal
 # never follows symlinks.
+#
+# Before writing, warns when the install would not take effect as expected:
+# CLAUDE_CONFIG_DIR points away from $HOME/.claude, $HOME/.claude/agents or
+# $HOME/.claude/skills is a symlink, or old factory-* copies under
+# $HOME/.cursor/agents or $HOME/.cursor/skills would shadow it in Cursor (they
+# are listed, never touched). The final report repeats every warning.
 
 # sh guard: must stay the first executable code and POSIX. macOS `sh` is bash
 # in POSIX mode with BASH_VERSION set, so check SHELLOPTS too.
@@ -109,15 +115,80 @@ in_list() {
   return 1
 }
 
+# Report lines, collected as newline-separated strings (not arrays: an empty
+# array breaks under `set -u` on bash 3.2). Warnings and left-in-place notices
+# are printed when they arise and repeated in the final report.
 removed_lines=""
 kept_lines=""
+warn_lines=""
 note_removed() { removed_lines="$removed_lines  removed $1"$'\n'; }
-note_kept() { kept_lines="$kept_lines  $1: not installed by soloAIfactory; left in place"$'\n'; }
+note_kept() {
+  local l="$1: not installed by soloAIfactory; left in place"
+  echo "$l"
+  kept_lines="$kept_lines  $l"$'\n'
+}
+warn() {
+  echo "warning: $1" >&2
+  warn_lines="$warn_lines  warning: $1"$'\n'
+}
+# warn_more <line>: a continuation line of the previous warning.
+warn_more() {
+  echo "  $1" >&2
+  warn_lines="$warn_lines    $1"$'\n'
+}
+report_repeats() {
+  if [ -n "$warn_lines$kept_lines" ]; then
+    echo "Warnings and notices (repeated from above):"
+    printf '%s' "$warn_lines$kept_lines"
+  fi
+}
 
-# Destination warnings (CLAUDE_CONFIG_DIR set, symlinked destination, old
-# ~/.cursor/ copies) belong here, before anything is staged or removed.
+# resolve_dir <path>: the physical path of an existing directory, or nothing.
+resolve_dir() { (cd -P -- "$1" 2>/dev/null && pwd -P) || true; }
+# strip_slashes <path>: <path> without trailing slashes ("/" stays "/").
+strip_slashes() {
+  local s="$1"
+  while [ "${#s}" -gt 1 ] && [ "${s%/}" != "$s" ]; do s="${s%/}"; done
+  printf '%s' "$s"
+}
+
+# Destination warnings, printed before anything is created, staged or
+# removed. They only read: nothing outside $HOME/.claude is ever written, and
+# nothing under $HOME/.cursor is ever removed.
 check_destination() {
-  :
+  local cfg="${CLAUDE_CONFIG_DIR:-}" a b d p target where first=true
+  if $uninstall; then where="removed from"; else where="installed into"; fi
+  # 1. Claude Code reads $CLAUDE_CONFIG_DIR instead of $HOME/.claude.
+  if [ -n "$cfg" ]; then
+    a="$(resolve_dir "$cfg")"
+    b="$(resolve_dir "$dest")"
+    if [ -z "$a" ] || [ -z "$b" ]; then
+      a="$(strip_slashes "$cfg")"
+      b="$(strip_slashes "$dest")"
+    fi
+    if [ "$a" != "$b" ]; then
+      warn "CLAUDE_CONFIG_DIR is $cfg, not $dest: Claude Code reads $cfg, so it will not see this install; Cursor will"
+    fi
+  fi
+  # 2. A symlinked agents or skills directory: entries land in its target.
+  for d in "$agents_dir" "$skills_dir"; do
+    [ -L "$d" ] || continue
+    target="$(resolve_dir "$d")"
+    if [ -n "$target" ]; then
+      warn "$d is a symlink to $target: the factory-* entries are $where $target"
+    else
+      warn "$d is a symlink to $(readlink "$d" || true), which is not an existing directory"
+    fi
+  done
+  # 3. Old user-level Cursor copies shadow $HOME/.claude in Cursor.
+  for p in "$HOME/.cursor/agents"/factory-* "$HOME/.cursor/skills"/factory-*; do
+    if [ ! -e "$p" ] && [ ! -L "$p" ]; then continue; fi
+    if $first; then
+      warn "these take priority over this install in Cursor; remove them:"
+      first=false
+    fi
+    warn_more "$p"
+  done
 }
 
 # Source sets: sorted, space-separated names.
@@ -171,6 +242,7 @@ check_destination
 if $uninstall; then
   if [ ! -d "$dest" ]; then
     echo "soloAIfactory is not installed: $dest does not exist"
+    report_repeats
     exit 0
   fi
 else
@@ -230,7 +302,7 @@ if $uninstall; then
   safe_rm "$staging"
   echo "soloAIfactory uninstalled from $dest"
   if [ -n "$removed_lines" ]; then printf '%s' "$removed_lines"; else echo "  nothing to remove"; fi
-  if [ -n "$kept_lines" ]; then printf '%s' "$kept_lines"; fi
+  report_repeats
   exit 0
 fi
 
@@ -274,5 +346,5 @@ else
 fi
 echo "  mode: $mode"
 if [ -n "$removed_lines" ]; then printf '%s' "$removed_lines"; fi
-if [ -n "$kept_lines" ]; then printf '%s' "$kept_lines"; fi
+report_repeats
 echo "Next step: start a new Claude Code session, or restart Cursor, then say 'set up the factory in this repo'"
