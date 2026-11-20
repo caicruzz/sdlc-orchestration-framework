@@ -5,15 +5,15 @@ The Architect, Planner, Coder, Reviewer, and Verifier agents all read this file.
 
 ## Tech Stack
 
-- **Language**: <!-- e.g. TypeScript, Python, Go, Rust, C# -->
-- **Runtime**: <!-- e.g. Node.js 22, Python 3.12, Go 1.22 -->
-- **Framework**: <!-- e.g. Next.js, FastAPI, Express, Django, ASP.NET -->
-- **Package Manager**: <!-- e.g. npm, pnpm, poetry, cargo, dotnet -->
+- **Language**: Markdown, Bash
+- **Runtime**: bash 3.2+ (macOS `/bin/bash`)
+- **Framework**: Claude Code and Cursor skills and subagents
+- **Package Manager**: none
 
 ## Project Structure
 
-- **Source directory**: <!-- e.g. src/ -->
-- **Test directory**: <!-- e.g. tests/ or src/__tests__/ -->
+- **Source directory**: `plugin/` (from a later task on; `.ai-factory/framework/` until then)
+- **Test directory**: `scripts/test-*.sh`
 - **Entry point**: <!-- e.g. src/index.ts -->
 - **Config files**: <!-- e.g. tsconfig.json, .eslintrc.js, pyproject.toml -->
 
@@ -21,26 +21,21 @@ The Architect, Planner, Coder, Reviewer, and Verifier agents all read this file.
 
 | Check | Command | Notes |
 |---|---|---|
-| **Install** | <!-- e.g. npm install --> | |
-| **Test** | <!-- e.g. npm test --> | Required |
-| **Lint** | <!-- e.g. npm run lint --> | Required |
-| **Type check** | <!-- e.g. npx tsc --noEmit --> | Optional — remove if not applicable |
-| **Build** | <!-- e.g. npm run build --> | Optional — remove if not applicable |
+| **Install** | `brew install shellcheck` (macOS) or `apt-get install shellcheck` | |
+| **Test** | `/bin/bash scripts/test.sh` | Required |
+| **Lint** | `/bin/bash scripts/lint.sh` | Required |
+| **Type check** | `none` | Optional — remove if not applicable |
+| **Build** | `none` | Optional — remove if not applicable |
 | **Format** | <!-- e.g. npx prettier --check . --> | Optional |
 
 ## Conventions
 
 - **Code style**: <!-- e.g. Prettier, Black, rustfmt -->
 - **Naming**: <!-- e.g. camelCase for functions/files, PascalCase for classes -->
-- **Commit style**: <!-- e.g. Conventional Commits (feat:, fix:, etc.) -->
-- **Test naming**: <!-- e.g. describe/it blocks, test() functions -->
+- **Commit style**: Conventional Commits
+- **Test naming**: one `scripts/test-<area>.sh` per area, one function per scenario
 - **Import style**: <!-- e.g. absolute imports from src/, relative within module -->
 
 ## Architecture Notes
 
-<!-- Add any project-specific rules that agents should know about -->
-<!-- Examples: -->
-<!-- - All API routes must validate input with Zod schemas -->
-<!-- - Database access only through repository classes in src/repositories/ -->
-<!-- - State management uses Zustand — do not add Redux or Context -->
-<!-- - Error handling uses Result<T, E> pattern, not exceptions -->
+- Every task adds or extends a `scripts/test-*.sh` file for its scenarios; `scripts/test.sh` runs them all. Tests assert lasting results, never a diff or a commit. A task that intentionally changes something an earlier test asserts updates that test in the same change. Tests never touch the real `$HOME` or make paid model calls.
