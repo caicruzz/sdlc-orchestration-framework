@@ -20,7 +20,7 @@ description: >-
 
 1. **`<slug>`** resolved — **`.ai-factory/projects/<slug>/`**
 2. **`01-epic.md`** and the **task dependency graph** define **order** — do not start a task until its **prerequisites** are **done** (per epic + graph: `T001 --> T002` means T001 before T002)
-3. **`.ai-factory/config.md`** present — **Verifier** uses **config only**, not task text (see isolation below)
+3. `.ai-factory/config.md` present **with Test and Lint filled**; otherwise stop and ask the human (suggest re-running `factory-setup`). The **Verifier** uses **config only**, not task text (see isolation below)
 
 ## Context isolation (strict)
 
@@ -29,6 +29,14 @@ description: >-
 | **Coder** | **One** task file **path** + **`.ai-factory/config.md`** as inputs; **full repository** for implementation | Design Doc, epic, other tasks as pasted context |
 | **Reviewer** | One task file + relevant code diff | Writing any file *(read-only; returns its report)* |
 | **Verifier** | **`.ai-factory/config.md`** — task identity as **task ID** (e.g. `T001`) for scope | Full task prose / feature context; writing any file *(read-only; returns its report)* |
+
+## Project overrides (at loop start)
+
+Before the first iteration, check for a project override of each agent this loop invokes — `factory-coder`, `factory-reviewer` and `factory-verifier` — at `.claude/agents/factory-<name>.md` and `.cursor/agents/factory-<name>.md`. For each such file that exists, print:
+
+```text
+using project override <path>
+```
 
 ## Loop (one task iteration)
 
@@ -51,8 +59,10 @@ Treat **Steps A → B → C → D** as one cycle for the **current** task file.
 
 **Persist both reports (main agent).** Reviewer and Verifier are **read-only** — they **return** their reports as text and never write files. After both return:
 
-1. Write the Reviewer report to **`.ai-factory/projects/<slug>/reviews/T<id>-review.md`** (shape: **`.ai-factory/templates/review.md`**)
-2. Write the Verifier report to **`.ai-factory/projects/<slug>/verifications/T<id>-verify.md`** (shape: **`.ai-factory/templates/verify.md`**)
+Templates are in `templates/` next to this SKILL.md. Shape the returned report with it when persisting: `templates/review.md` for the Reviewer report and `templates/verify.md` for the Verifier report. The Reviewer and Verifier prompts include no template.
+
+1. Write the Reviewer report to **`.ai-factory/projects/<slug>/reviews/T<id>-review.md`** (shape: `templates/review.md`)
+2. Write the Verifier report to **`.ai-factory/projects/<slug>/verifications/T<id>-verify.md`** (shape: `templates/verify.md`)
 3. Update the task file's **`## Review & Verification`** section: status (`pass` / `revisions-needed`, `pass` / `fail`), a one-line key-findings summary, and the report paths
 
 Do this sequentially after both subagents finish, so the two results never race on the task file.
@@ -62,11 +72,14 @@ Do this sequentially after both subagents finish, so the two results never race 
 | Reviewer verdict | Verifier verdict | Action |
 |------------------|------------------|--------|
 | pass | pass | Proceed to Step D |
+| anything | **fail**, and a failed check is *not configured* | **Stop and ask the human to fill the command; do not append to the task file or re-invoke the Coder.** |
 | **revisions-needed** | anything | **Append** feedback to the task file (**do not** delete earlier feedback blobs), return to Step A |
 | anything | **fail** | **Append** Verifier output to the task file, return to Step A |
 | Mixed failure | Mixed failure | Append **both**, return to Step A |
 
-Re-invoke **Coder** with the **same** task file path **after** appends.
+The *not configured* row overrides every other row: if any failed Verifier check is *not configured*, stop and ask the human even when the Reviewer also asked for revisions. Name the missing label (e.g. **Lint**) and point at the **Commands** table of `.ai-factory/config.md`; only a human can fill it. Resume at Step B once the human has filled it.
+
+Otherwise, re-invoke **Coder** with the **same** task file path **after** appends.
 
 ### Step D — Human sign-off
 
@@ -90,15 +103,16 @@ When **every** planned task for the slug is **`done`**, give the human a short *
 | **Remove** previous failure feedback when re-invoking Coder | **Append** only |
 | **Let Reviewer edit** implementation | **Coder** edits; Reviewer reads |
 | Implement tasks **out of DAG order** unless the user overrides with scope | Depends-on edges are binding |
+| **Re-invoke the Coder** for a Verifier check that is *not configured* | Only a human can fill config commands; stop and ask the human |
 
 ## Invoking subagents
 
-The subagents live in `.cursor/agents/` and `.claude/agents/`; both are generated from `.ai-factory/framework/agents/` by `.ai-factory/sync.sh`. Wherever this skill says *invoke the `factory-<name>` subagent*:
-
-- **Cursor** — delegate to the subagent by name (e.g. `/factory-<name> <input>`).
-- **Claude Code** — call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
-
-Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
+Wherever this skill says *invoke the `factory-<name>` subagent*:
+- **Cursor**: delegate by name, e.g. `/factory-<name> <input>`.
+- **Claude Code**: call the Agent tool with `subagent_type: factory-<name>`.
+The installed agents live in `~/.claude/agents/`; a project `.claude/agents/factory-<name>.md`
+overrides one by each tool's own precedence. Pass only the inputs this skill names
+(paths, task IDs, inlined template content).
 
 Example inputs:
 
@@ -123,4 +137,6 @@ factory-verifier  Verify T001
 - **Coder** invoked with **exact** task path; **Reviewer + Verifier** launched **in parallel** after implementation for that iteration
 - **`reviews/T<id>-review.md`** and **`verifications/T<id>-verify.md`** written by the main agent from the returned reports
 - On failure, task file shows **appended** feedback, then Coder **re-invoked**
+- When a failed Verifier check is *not configured*, the human was asked to fill the command; nothing was appended to the task file and the Coder was **not** re-invoked
+- At loop start, `using project override <path>` printed for each project override of `factory-coder`, `factory-reviewer` or `factory-verifier`
 - Human **explicitly acknowledged** completion before moving task to **`done`** or starting the next task if your process bundles approval per task
