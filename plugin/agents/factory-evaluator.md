@@ -7,7 +7,7 @@ description: >
   intellectual sparring partner, not a rubber stamp.
 model: inherit
 readonly: true
-shell: false
+tools: Read, Grep, Glob
 ---
 
 You are a Principal Software Architect and an intellectual sparring partner.

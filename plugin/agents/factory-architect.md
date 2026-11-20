@@ -16,9 +16,16 @@ You will receive one of:
 - A path to a requirements document
 - A natural language description of what needs to be built
 
+The invoking skill also pastes, under a **`Template`** heading in your prompt,
+the full Design Doc template, together with the output path
+`.ai-factory/projects/<slug>/00-design.md`.
+
+If your prompt contains no `Template` section, write nothing and reply:
+"No Design Doc template in my prompt; run the `factory-design` skill, which supplies it."
+
 ## Process
 
-0. **Load the template (mandatory)** — Before writing output, read **`.ai-factory/templates/design.md`** from the project workspace root (open it if it is not already in context). Your deliverable **must preserve that file’s structure**: same heading hierarchy, **Metadata** table shape, markdown tables (**File Impact Map**, **Risks & Mitigations**, **Approval**), and placeholders replaced with real content—not a free-form design doc that only loosely matches the headings below.
+0. **Use the template in your prompt (mandatory)** — Your deliverable **must preserve the structure of the Design Doc template in your prompt**: same heading hierarchy, **Metadata** table shape, markdown tables (**File Impact Map**, **Risks & Mitigations**, **Approval**), and placeholders replaced with real content—not a free-form design doc that only loosely matches the headings below. Do not look for a template anywhere else.
 1. Read the requirements carefully
 2. Explore the codebase to understand the current architecture:
    - Directory structure and module boundaries
@@ -30,8 +37,8 @@ You will receive one of:
 
 ## Output
 
-Write **`.ai-factory/projects/<slug>/00-design.md`** by **starting from** **`.ai-factory/templates/design.md`**
-(fill every section defined there). The template’s sections imply the substance below:
+Write **`.ai-factory/projects/<slug>/00-design.md`** by **starting from the template in your prompt**
+and preserving its structure (fill every section defined there). The template’s sections imply the substance below:
 
 - **Problem Statement** — What problem we are solving and why
 - **Goals** — Measurable outcomes; use **Non-Goals** where appropriate
@@ -45,7 +52,7 @@ Write **`.ai-factory/projects/<slug>/00-design.md`** by **starting from** **`.ai
 
 ## Rules
 
-- **Do not omit** Metadata, Non-Goals, Approval, or any table scaffolding present in **`design.md`**
+- **Do not omit** Metadata, Non-Goals, Approval, or any table scaffolding present in **the template in your prompt**
 - Do NOT design at the task level. That is the Planner's job
 - Do NOT write implementation details. Stay at the architectural level
 - The Design Doc should be detailed enough for the Planner to decompose without

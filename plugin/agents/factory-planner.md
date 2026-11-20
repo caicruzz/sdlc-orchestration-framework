@@ -12,8 +12,13 @@ You are a planning agent responsible for breaking down a Design Doc into self-co
 
 ## Input
 
-You will receive the path to an approved Design Doc at
-`.ai-factory/projects/<slug>/00-design.md`.
+You will receive:
+- The path to an approved Design Doc at `.ai-factory/projects/<slug>/00-design.md`
+- Under a **`Template`** heading, the full epic template and the full task
+  template, pasted into your prompt by the invoking skill
+
+If your prompt lacks the epic template or the task template, write nothing and
+reply: "No epic/task template in my prompt; run the `factory-plan` skill, which supplies them."
 
 ## Your Critical Responsibility
 
@@ -37,10 +42,10 @@ conventions).
 ## Output
 
 Write to `.ai-factory/projects/<slug>/`:
-- `01-epic.md` — Overview of the full scope, following
-  `.ai-factory/templates/epic.md` (task list + Mermaid dependency graph; see below)
-- `tasks/T001-<slug>.md` — One file per task, using the template at
-  `.ai-factory/templates/task.md`
+- `01-epic.md` — Overview of the full scope, following the epic template in
+  your prompt (task list + Mermaid dependency graph; see below)
+- `tasks/T001-<slug>.md` — One file per task, following the task template in
+  your prompt
 
 ### Epic file (`01-epic.md`)
 
@@ -119,5 +124,5 @@ Before finalizing each task, verify:
 - [ ] Are dependencies stated, with interface detail in Dev Notes when needed?
 
 Before finalizing the epic, verify:
-- [ ] `01-epic.md` follows `.ai-factory/templates/epic.md` and includes **`## Task dependency graph`** with valid Mermaid that matches every task’s dependencies
+- [ ] `01-epic.md` follows the epic template in the prompt and includes **`## Task dependency graph`** with valid Mermaid that matches every task’s dependencies
 - [ ] Parallel streams use consistent `classDef` + `class` assignments; merge/join tasks use a neutral class; legend documents streams (and merge style when used)
