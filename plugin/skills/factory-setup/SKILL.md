@@ -105,7 +105,7 @@ Read `reference.md` now and apply its heuristics.
 | Request says "re-detect" (with or without "apply without asking") | Every **unfilled** field and every absent `.gitignore` line and `.gitkeep` file; filled rows appear in the proposal as `kept` |
 | Otherwise (`config.md` exists but not set up) | Only the **missing required items**: unconfigured **Test** / **Lint** and any missing `.gitkeep` file. Every other row is left exactly as it is |
 
-**A value a human wrote is never changed**: not by re-detect, not in apply-without-review mode. It changes only through an explicit human edit in step 5.
+**A value a human wrote is never changed**: not by re-detect, not in apply-without-review mode. It changes only through an explicit human edit in step 5. Detection and the "ask" cases in `reference.md` apply **only to in-scope fields**: a configured row is shown as `kept`, is never asked about, and gets no replacement even when CI, a task runner or a script suggests a different command.
 
 ### 5. Show the proposal
 

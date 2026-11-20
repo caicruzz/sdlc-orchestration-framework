@@ -353,6 +353,20 @@ scenario_bundled_files_only() {
   in_skill "never \`.claude/settings.json\` or Cursor settings"
 }
 
+# T012 Scenario: Human-written commands are kept. Dogfooding re-detect on this
+# repo (no ecosystem marker files; CI runs `bash scripts/test.sh` while config
+# has `/bin/bash scripts/test.sh`) showed the empty-repo "ask" and command
+# precedence could be read as re-asking for, or replacing, configured rows.
+scenario_human_written_commands_kept() {
+  echo "# Human-written commands are kept (T012)"
+  in_skill "Detection and the \"ask\" cases in \`reference.md\` apply **only to in-scope fields**"
+  in_skill "gets no replacement even when CI, a task runner or a script suggests a different command"
+  in_ref "Precedence chooses values **only for unfilled rows**."
+  in_ref "never propose that command as a replacement"
+  in_ref "Every \"ask\" below covers **only unfilled, in-scope fields**."
+  in_ref "On re-detect, or whenever \`config.md\` already has values, ask only for the unfilled rows"
+}
+
 scenario_frontmatter
 scenario_not_a_git_repository
 scenario_root_is_home_directory
@@ -384,6 +398,7 @@ scenario_monorepo_workspaces
 scenario_empty_repo
 scenario_conventions
 scenario_bundled_files_only
+scenario_human_written_commands_kept
 
 if [ "$FAILED" -ne 0 ]; then
   echo "test-setup-skill: FAILED"

@@ -33,9 +33,13 @@ When several sources suggest a command, the precedence, **highest first**, is:
 4. **The plain command a CI config runs** (`.github/workflows/*.yml`, `.gitlab-ci.yml`), copied as written when it is a single plain command.
 5. **The ecosystem default** from the table, used **only when the tool is configured or built in**.
 
+Precedence chooses values **only for unfilled rows**. A configured row is `kept` even when a source above suggests a different command (for example CI runs `bash scripts/test.sh` while **Test** is `/bin/bash scripts/test.sh`); never propose that command as a replacement.
+
 ## Edge cases
 
 In apply-without-review mode, every "ask" below becomes "leave the field unfilled and state the reason", for example `Test: unfilled; polyglot (Python, Go) with no task runner`.
+
+Every "ask" below covers **only unfilled, in-scope fields**. A configured row (for example a human-written **Test** or **Lint**) is shown as `kept` and is never asked about again.
 
 ### Placeholder npm test script
 
@@ -62,7 +66,7 @@ When `pnpm-workspace.yaml`, a `workspaces` field in `package.json`, `turbo.json`
 
 ### Empty repo
 
-With **no marker files**, every value is unfilled. Ask the human for the language and the commands (Test and Lint at least). Still propose the `.gitkeep` files and `.gitignore` lines when they are in scope.
+With **no marker files**, every value is unfilled. Ask the human for the language and the commands (Test and Lint at least). On re-detect, or whenever `config.md` already has values, ask only for the unfilled rows: a repo with no marker files whose config already has **Test** and **Lint** (for example a Bash or Markdown repo) keeps them as `kept`. Still propose the `.gitkeep` files and `.gitignore` lines when they are in scope.
 
 ### Conventions
 
