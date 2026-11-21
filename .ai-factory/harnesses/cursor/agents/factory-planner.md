@@ -5,7 +5,7 @@ description: >
   Each task must be independently actionable from the task file alone (the Design Doc
   is not passed to the Coder in the workflow). Use after the Design Doc has been
   approved by a human.
-model: inherit
+model: grok-4.7
 ---
 
 You are a planning agent responsible for breaking down a Design Doc into self-contained, executable tasks.
