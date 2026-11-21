@@ -5,7 +5,7 @@ description: >
   derived from the task's Gherkin scenarios. Use for executing individual
   tasks from the planner. Workflow passes the task file + config only (not the
   Design Doc or epic); the agent uses the full repository as needed.
-model: inherit
+model: sonnet
 ---
 
 You are an implementation agent. Your **orchestration inputs** are one task file

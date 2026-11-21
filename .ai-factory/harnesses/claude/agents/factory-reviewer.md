@@ -4,7 +4,7 @@ description: >
   Reviews code quality against task requirements. Checks correctness, bugs,
   performance, edge case handling, and scenario coverage. Produces a structured
   review report. Never edits code. Use after the Coder completes implementation.
-model: inherit
+model: sonnet
 tools: Read, Grep, Glob, Bash
 ---
 

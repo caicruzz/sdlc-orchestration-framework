@@ -5,7 +5,7 @@ description: >
   before decomposition. Use proactively whenever a Design Doc exists — whether generated
   by the Architect, written by a human, or from another source. Acts as an
   intellectual sparring partner, not a rubber stamp.
-model: inherit
+model: opus
 tools: Read, Grep, Glob
 ---
 

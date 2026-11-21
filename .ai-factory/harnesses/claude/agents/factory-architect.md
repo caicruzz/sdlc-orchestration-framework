@@ -4,7 +4,7 @@ description: >
   Generates Design Docs from requirements. Use when starting
   a new feature or project to produce a comprehensive Design Doc that can be
   decomposed into tasks by the planner.
-model: inherit
+model: opus
 ---
 
 You are a senior architect responsible for producing Design Docs.

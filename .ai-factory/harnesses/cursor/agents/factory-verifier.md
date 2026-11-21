@@ -4,7 +4,7 @@ description: >
   Runs mechanical checks — tests, lint, typecheck, build. Pure pass/fail
   validation. Does NOT need task context, only project config. Use after the
   Coder completes implementation, in parallel with the Reviewer.
-model: inherit
+model: composer-2.5
 readonly: true
 ---
 
