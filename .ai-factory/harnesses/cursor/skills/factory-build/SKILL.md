@@ -33,7 +33,8 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 2. **`01-epic.md`** and its **task dependency graph** define the order (`T001 --> T002` means T002 depends on T001)
 3. **`.ai-factory/config.md`** present, including its **`## Build`** settings (defaults below if a row is missing)
 4. The project is a **git** repository with a remote, and you can push and open pull requests (for example with the `gh` CLI). If you cannot open a PR, stop and tell the human; do not fall back to merging locally
-5. The working tree of the main checkout is clean, or the human agrees to proceed
+5. **`.ai-factory/projects/` is gitignored** (check with `git check-ignore -q .ai-factory/projects/<slug>/01-epic.md`). If it is tracked, every worktree would get its own stale copy of the task files and status writes would dirty the main checkout, so stop and offer to add `.ai-factory/projects/*` to `.gitignore` (and untrack it with `git rm -r --cached .ai-factory/projects` if needed) before building
+6. The working tree of the main checkout is clean, or the human agrees to proceed
 
 ## Build settings (`config.md` → `## Build`)
 
@@ -67,8 +68,8 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 ## Step 0 — Set up the epic branch (once per build)
 
 1. Resolve `base_branch` (setting, else the current branch). Tell the human which base you are using
-2. If `factory/<slug>` does not exist locally or on the remote, create it from `base_branch` and push it: `git push -u origin factory/<slug>`
-3. If it exists, fetch it: `git fetch origin factory/<slug>`
+2. If `origin/factory/<slug>` does not exist, push the epic branch: reuse the local `factory/<slug>` if there is one, otherwise create it from `base_branch`, then `git push -u origin factory/<slug>`
+3. Otherwise fetch it: `git fetch origin factory/<slug>`. Step A always branches from `origin/factory/<slug>`
 
 ## Scheduler
 
@@ -93,7 +94,7 @@ If your harness cannot run subagents concurrently, run the same scheduler with o
 
 ### Step B — Implement
 
-1. Increment the task file's **Iteration** count
+1. Increment the task file's **Iteration** count, **unless** this round came from human feedback on the PR or a human-requested conflict fix. Those rounds never count toward `max_iterations`
 2. **Invoke the `factory-coder` subagent** with the task file path, the `config.md` path, the worktree path and the epic branch
 3. The Coder works and commits only in the worktree, and sets status to **`implemented`** (or **`blocked`**, which stops this task's loop; report it to the human)
 4. **Coder autonomy:** implementation choices and optional Reviewer nits stay with the Coder. **Every** Gherkin scenario **must** pass

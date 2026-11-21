@@ -56,7 +56,10 @@ copy without overwriting anything that already exists:
 - `<factory>/.ai-factory/templates/` to `.ai-factory/templates/`
 
 Then create `.ai-factory/projects/` and `.ai-factory/archive/` if they are
-missing. Offer (do not force) to add these lines to the project's `.gitignore`:
+missing. Offer (do not force) to add these lines to the project's `.gitignore`.
+Tell the user that the build stage requires `.ai-factory/projects/` to be
+ignored, because task files must not be copied into task worktrees, and that
+`factory-build` stops and asks if it is not:
 
 ```gitignore
 .ai-factory/projects/*
