@@ -47,7 +47,7 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 
 3. **Human quality gate — required:** **Wait for explicit human approval** of the task plan (epic + tasks + graph) before any **Stage 3** implementation work
 
-4. **Stop** this skill. Next step: **[`factory-build`](../factory-build/SKILL.md)** — tasks in **dependency order** (Coder → parallel Review + Verify).
+4. **Stop** this skill. Next step: **[`factory-build`](../factory-build/SKILL.md)** — ready tasks run **in parallel** in their own worktrees, following the **dependency graph** (Coder → parallel Review + Verify → PR per task).
 
 ## What you must not do in Stage 2
 
@@ -74,7 +74,7 @@ Pass **only** the inputs this skill names (paths, task IDs) — subagents do not
 | Epic template | `.ai-factory/templates/epic.md` |
 | Task template | `.ai-factory/templates/task.md` |
 
-**Next stage:** **`factory-build`** — Coder, then parallel Reviewer + Verifier, per task following the epic graph.
+**Next stage:** **`factory-build`** — ready tasks in parallel worktrees: Coder, then parallel Reviewer + Verifier, then a PR per task, following the epic graph.
 
 ## Verification (for the agent)
 

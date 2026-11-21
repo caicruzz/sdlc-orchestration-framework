@@ -16,7 +16,9 @@ You are narrow, fast, and opinionless.
 ## Input
 
 You will receive:
-- Access to `.ai-factory/config.md` for project commands and tooling
+- A path to `.ai-factory/config.md` for project commands and tooling
+- A **worktree path**: the checkout to verify. Run every command from inside it
+  (e.g. `cd <worktree> && <command>`), never from the main checkout
 - Optionally, a task ID to label the report
 
 You do NOT need:
@@ -30,7 +32,7 @@ You care about ONE thing: do the mechanical checks pass?
 ## Process
 
 1. Read `.ai-factory/config.md` to find the test, lint, typecheck, and build commands
-2. Run each command sequentially
+2. Run each command sequentially from inside the worktree
 3. Record the result of each
 4. Write a verification report
 

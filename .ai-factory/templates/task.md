@@ -48,6 +48,15 @@
 |---|---|---|
 | <!-- scenario name --> | <!-- path --> | <!-- test name --> |
 
+## Delivery
+
+<!-- Filled by the orchestrator during the build. -->
+
+- Branch: —
+- Worktree: —
+- Iteration: 0 / <max_iterations>
+- PR: —
+
 ## Review & Verification
 
 ### Review
@@ -64,4 +73,8 @@
 
 <!-- Contradictions or impossible scenarios — set Status to blocked. -->
 
+<!-- When the retry cap is hit, the orchestrator adds an "## Escalation" section
+     summarizing each iteration's failures and sets Status to blocked. -->
+
+<!-- Status values: draft, in-progress, implemented, in-review (PR open), done (PR merged), blocked -->
 ## Status: draft

@@ -56,14 +56,35 @@ copy without overwriting anything that already exists:
 - `<factory>/.ai-factory/templates/` to `.ai-factory/templates/`
 
 Then create `.ai-factory/projects/` and `.ai-factory/archive/` if they are
-missing. Offer (do not force) to add these lines to the project's `.gitignore`:
+missing. Offer (do not force) to add these lines to the project's `.gitignore`.
+Tell the user that the build stage requires `.ai-factory/projects/` to be
+ignored, because task files must not be copied into task worktrees, and that
+`factory-build` stops and asks if it is not:
 
 ```gitignore
 .ai-factory/projects/*
 .ai-factory/archive/*
 ```
 
-## 6. Report
+## 6. Offer the CI workflow
+
+The build stage opens a pull request per task, and
+`.ai-factory/templates/ci/factory-checks.yml` runs the `config.md` checks on
+every pull request so CI reproduces the Verifier's result. Ask the user whether
+to install it (only if the project is on GitHub):
+
+- If `.github/workflows/factory-checks.yml` already exists, leave it alone and
+  say so.
+- Otherwise copy the template there. If `.ai-factory/config.md` already has
+  commands filled in, replace each `FACTORY_PLACEHOLDER` step's `run` with the
+  matching command, delete steps whose check is not configured, and add the
+  toolchain setup step for the project's stack. If `config.md` is not filled in
+  yet, keep the placeholders and tell the user that the workflow fails until
+  they fill it in (or ask you to, after editing `config.md`).
+- Tell the user they can make `factory-checks` a required check in branch
+  protection for their default branch and `factory/**` branches.
+
+## 7. Report
 
 Tell the user what you installed and where, and what you skipped because it
 already existed. For skipped `templates/` files, list the ones that differ from

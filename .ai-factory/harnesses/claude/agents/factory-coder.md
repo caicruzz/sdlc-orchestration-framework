@@ -16,12 +16,27 @@ requirements source; the task file is the contract.
 
 You will receive:
 - A path to a task file at `.ai-factory/projects/<slug>/tasks/T<id>-<name>.md`
-- Access to `.ai-factory/config.md` for project conventions
+- A path to `.ai-factory/config.md` for project conventions
+- A **worktree path**: a git worktree with the task branch
+  (`factory/<slug>/T<id>`) checked out, where all code changes happen
+- The **epic branch** (`factory/<slug>`) the task branch was created from
 
 The **main agent must not** paste the Design Doc, epic, or other tasks into your
 prompt. You **do** have the full repository workspace: read and navigate any
 files you need to implement and test the task (the task's Dev Notes section,
 when present, should name the primary touch points).
+
+## Working in the worktree
+
+Other tasks may be running at the same time in their own worktrees.
+
+- Read, edit, and run commands **only inside your worktree** (run commands from
+  it, e.g. `cd <worktree> && <command>`, or use absolute paths under it)
+- Commit to the task branch already checked out there. Do **not** push, switch
+  branches, merge, rebase, or touch the main checkout's code or other worktrees;
+  the orchestrator handles branches and pull requests
+- The task file and `config.md` live in the main checkout, not in the worktree.
+  Edit the task file at the path you were given
 
 ## Your Job
 
@@ -67,7 +82,7 @@ Rules for test writing:
 
 1. Fill in the `## Test Mapping` table in the task file linking each scenario
    to its test file and test name
-2. Update the task status from `draft` to `implemented`
+2. Update the task status from `in-progress` to `implemented`
 3. If a scenario seems contradictory or impossible, add a `## Blockers`
    section to the task file and set status to `blocked`
 
@@ -138,8 +153,8 @@ Implements T001 scenario: Generate Google OAuth authorization URL
 
 ## Handling Re-invocation
 
-When you are invoked on a task that already has `Status: implemented` and
-contains `## Review Feedback` or `## Verification Feedback` sections:
+When you are invoked on a task that already contains `## Review Feedback`,
+`## Verification Feedback`, or `## Human Feedback` sections:
 
 1. Read the feedback carefully
 2. Decide which items to address — you are NOT required to implement every
@@ -148,4 +163,4 @@ contains `## Review Feedback` or `## Verification Feedback` sections:
 4. Re-run tests locally to confirm nothing is broken
 5. Add a `## Coder Response` section noting what you addressed and what you
    chose not to, with reasoning
-6. Keep status as `implemented`
+6. Set status to `implemented`

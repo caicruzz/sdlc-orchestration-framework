@@ -28,6 +28,17 @@ The Architect, Planner, Coder, Reviewer, and Verifier agents all read this file.
 | **Build** | <!-- e.g. npm run build --> | Optional — remove if not applicable |
 | **Format** | <!-- e.g. npx prettier --check . --> | Optional |
 
+## Build
+
+Settings for the `factory-build` skill. Delete a row to use its default.
+
+| Setting | Value | Notes |
+|---|---|---|
+| **max_concurrent_tasks** | 3 | Most tasks running at once, each in its own git worktree. `1` runs one at a time |
+| **max_iterations** | 3 | Most Coder passes per task before it is set `blocked` and escalated to you |
+| **worktree_dir** | ../<repo>-worktrees | Where task worktrees go, relative to the repo root. Keep it outside the repo |
+| **base_branch** | <!-- e.g. main; leave empty to use the branch checked out when the build starts --> | The epic branch `factory/<slug>` starts here, and the final PR targets it |
+
 ## Conventions
 
 - **Code style**: <!-- e.g. Prettier, Black, rustfmt -->

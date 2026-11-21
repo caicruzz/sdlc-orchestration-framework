@@ -1,0 +1,45 @@
+# Solo AI Factory: runs the .ai-factory/config.md checks on every pull request,
+# so the Verifier's result is reproduced by CI instead of trusted from the agent.
+#
+# Install as .github/workflows/factory-checks.yml. The installer fills in the
+# toolchain setup and the commands from .ai-factory/config.md. Keep the commands
+# in sync with config.md when you change either. Delete a step whose check is
+# not configured. Any step still holding a FACTORY_PLACEHOLDER fails on purpose.
+#
+# To make it a required check, add "factory-checks" to the branch protection
+# (or ruleset) of your default branch and of factory/** branches.
+
+name: factory-checks
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  factory-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # Toolchain setup for your stack, for example:
+      #   - uses: actions/setup-node@v4
+      #     with: { node-version: 22, cache: npm }
+      #   - uses: actions/setup-python@v5
+      #     with: { python-version: "3.12" }
+
+      - name: Install
+        run: 'echo "FACTORY_PLACEHOLDER: set the Install command from config.md" && exit 1'
+
+      - name: Test
+        run: 'echo "FACTORY_PLACEHOLDER: set the Test command from config.md" && exit 1'
+
+      - name: Lint
+        run: 'echo "FACTORY_PLACEHOLDER: set the Lint command from config.md" && exit 1'
+
+      - name: Type check
+        run: 'echo "FACTORY_PLACEHOLDER: set the Type check command from config.md" && exit 1'
+
+      - name: Build
+        run: 'echo "FACTORY_PLACEHOLDER: set the Build command from config.md" && exit 1'
