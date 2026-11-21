@@ -2,9 +2,9 @@
 
 **Run a whole AI software factory as a team of one.** A line of specialized agents designs, plans, builds and inspects your software in [Claude Code](https://claude.com/claude-code), [Cursor](https://cursor.com) and [OpenCode](https://opencode.ai), with human quality gates between every stage.
 
-You bring the requirements and make the calls at each gate. The factory turns them into a Design Doc, red-teams it, breaks it into testable work, builds each piece, and puts every piece through parallel review and verification before it reaches you. The agents and **Agent Skills** ship ready to use for each supported harness in `.ai-factory/harnesses/`, and your AI agent installs them by following [`install-factory-instructions.md`](install-factory-instructions.md) (see [Supported tools](#supported-tools)).
+You bring the requirements and make the calls at each gate. The factory turns them into a Design Doc, red-teams it, breaks it into testable work, builds each piece, and puts every piece through parallel review and verification before it reaches you. The agents and **Agent Skills** ship ready to use for each supported harness in `.ai-factory/harnesses/`, and your AI agent installs them by following [`install-factory-instructions.md`](install-factory-instructions.md) (see [Supported tools](#-supported-tools)).
 
-## How It Works
+## ⚙️ How It Works
 
 ```
 Path A: No Design Doc yet         Path B: Design Doc already exists
@@ -68,7 +68,7 @@ Path A: No Design Doc yet         Path B: Design Doc already exists
                  Ship
 ```
 
-## The Line: Agents as Stations
+## 🏭 The Line: Agents as Stations
 
 | Station       | Role                                                                    | Reads                               | Writes                                                                         | Model   | Readonly |
 | ------------- | ----------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------ | ------- | -------- |
@@ -112,7 +112,7 @@ The Evaluator is not a rubber stamp. It operates under five strict rules:
 
 The Evaluator returns a structured report with: Alignment Check, Executive Summary, Critical Vulnerabilities & Blind Spots, Trade-off Analysis, Alternative Approaches, Hard Questions, and a Verdict (ready-for-planning / needs-revision / blocked).
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Ask your AI agent to install it
 
@@ -148,11 +148,11 @@ Edit `.ai-factory/config.md` to match your tech stack:
 
 Use the [`factory-design`](.ai-factory/harnesses/claude/skills/factory-design/SKILL.md) skill in natural language (Claude Code, Cursor or OpenCode), for example: *Run the design stage for OAuth2 with Google and GitHub*, or *Evaluate the Design Doc at `.ai-factory/projects/oauth2/00-design.md`*. The skill covers the Architect (when needed), the mandatory Evaluator, persisting `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`, and the human quality gate; it documents when the subagents are invoked.
 
-## Workflow
+## 🔄 Workflow
 
 The factory runs in four stages, each ending at a human quality gate.
 
-### Stage 1: Design
+### 📐 Stage 1: Design
 
 Follow [`factory-design`](.ai-factory/harnesses/claude/skills/factory-design/SKILL.md) end-to-end.
 
@@ -172,7 +172,7 @@ The skill runs the **Evaluator** on `.ai-factory/projects/<slug>/00-design.md`. 
 
 The skill stops before Stage 2 until the human approves.
 
-### Stage 2: Plan
+### 🗺️ Stage 2: Plan
 
 Follow [`factory-plan`](.ai-factory/harnesses/claude/skills/factory-plan/SKILL.md) after the Design Doc is human-approved. The skill uses the **Planner** to read `.ai-factory/projects/<slug>/00-design.md` and produce self-contained tasks with Gherkin scenarios under `.ai-factory/projects/<slug>/tasks/`, plus `01-epic.md` with a Mermaid task dependency graph (following `.ai-factory/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
 
@@ -180,7 +180,7 @@ Follow [`factory-plan`](.ai-factory/harnesses/claude/skills/factory-plan/SKILL.m
 
 The skill requires `## Task dependency graph` in `01-epic.md` and stops at human approval before implementation; subagent invocation details live in the skill file.
 
-### Stage 3: Build
+### 🔨 Stage 3: Build
 
 For each task (respect dependency ordering from `01-epic.md`), follow [`factory-build`](.ai-factory/harnesses/claude/skills/factory-build/SKILL.md), for example: *Implement T001 for `<slug>`* or *run the build loop for the next task*.
 
@@ -188,13 +188,13 @@ The skill defines the loop: **Coder** implements from the task file and Gherkin;
 
 **Quality gate: Approve the completed task.**
 
-For low-level or custom orchestration you can invoke the `factory-coder`, `factory-reviewer`, and `factory-verifier` subagents directly (see [Supported tools](#supported-tools)); prefer driving work through `factory-build` so gates and parallelism stay consistent.
+For low-level or custom orchestration you can invoke the `factory-coder`, `factory-reviewer`, and `factory-verifier` subagents directly (see [Supported tools](#-supported-tools)); prefer driving work through `factory-build` so gates and parallelism stay consistent.
 
-### Stage 4: Ship
+### 📦 Stage 4: Ship
 
 After all tasks pass review and verification, the feature is ready for final human review and merge.
 
-### Archiving a project
+### 🗄️ Archiving a project
 
 When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/claude/skills/factory-archive/SKILL.md) skill; more detail in [`reference.md`](.ai-factory/harnesses/claude/skills/factory-archive/reference.md).
 
@@ -211,7 +211,7 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
 
 **Git.** In this repository, `.ai-factory/projects/*` and `.ai-factory/archive/*` are **gitignored** (with `.gitkeep` placeholders) so local factory and archive output stay off the default commit unless you opt in.
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 .ai-factory/
@@ -271,7 +271,7 @@ install-factory-instructions.md    # Entry point your AI agent follows to instal
 .github/scripts/check-harnesses.sh # CI: harness copies stay in sync
 ```
 
-## Important Implementation Details
+## 🔍 Important Implementation Details
 
 ### Two Entry Paths
 
@@ -343,7 +343,7 @@ The Coder has autonomy in two key areas:
 
 This is by design. The Planner's Gherkin scenarios are the contract. Everything else is advisory.
 
-### Human Quality Gates
+### 🚦 Human Quality Gates
 
 Four mandatory human checkpoints in every run:
 
@@ -354,7 +354,7 @@ Four mandatory human checkpoints in every run:
 
 Use the `factory-design`, `factory-plan`, and `factory-build` skills so the orchestrator follows the stages, parallel review/verify, and these gates explicitly — skills replace a separate always-on workflow rule.
 
-## Supported tools
+## 🧰 Supported tools
 
 soloAIfactory supports **Claude Code**, **Cursor** and **OpenCode**. Each harness has its own folder in `.ai-factory/harnesses/` with agents and skills already in the format that harness expects, so installing is a plain copy. Templates and `config.md` are shared.
 
@@ -392,7 +392,7 @@ Cursor also reads `.claude/agents/` and `.claude/skills/`, and OpenCode also rea
 
 Add `.ai-factory/harnesses/<name>/` with an `INSTALL.md` (target paths, steps, verification) and the same `agents/` and `skills/` files as the other harnesses, in that harness's format. Then add a row to the table in `install-factory-instructions.md`.
 
-## Customizing for Your Project
+## 🎛️ Customizing for Your Project
 
 ### Stack Configuration
 
@@ -418,9 +418,9 @@ Templates in `.ai-factory/templates/` define the output format. Modify them to:
 
 ### Adding New Agents
 
-Add the new agent as `factory-<name>.md` in every harness's `agents/` folder, using that harness's frontmatter (see [Supported tools](#supported-tools)) and the same prompt body. New skills go in `skills/<skill-name>/SKILL.md` in every harness (the frontmatter `name` must match the folder name). Reinstall so each tool picks them up; each tool delegates based on the description.
+Add the new agent as `factory-<name>.md` in every harness's `agents/` folder, using that harness's frontmatter (see [Supported tools](#-supported-tools)) and the same prompt body. New skills go in `skills/<skill-name>/SKILL.md` in every harness (the frontmatter `name` must match the folder name). Reinstall so each tool picks them up; each tool delegates based on the description.
 
-## File Reference
+## 📚 File Reference
 
 ### `.ai-factory/templates/task.md` — The Most Critical File
 
@@ -455,18 +455,18 @@ The Verifier reads command configurations from here. If a command is missing or 
 
 The factory's procedure (paths, Evaluator, Planner, build loop, human quality gates) lives in the `factory-design`, `factory-plan`, `factory-build`, and `factory-archive` skills. Invoke or follow those skills instead of a separate always-on workflow rule.
 
-## Requirements
+## ✅ Requirements
 
 - [Claude Code](https://claude.com/claude-code), [Cursor](https://cursor.com) with agent mode, or [OpenCode](https://opencode.ai)
 - A project with a configured test runner and linter
 - No other dependencies — this is pure configuration
 
-## Troubleshooting
+## 🩺 Troubleshooting
 
 For a clean reinstall, ask your agent to follow [`install-factory-instructions.md`](install-factory-instructions.md) again. It replaces only `factory-*` agents and skills (asking first about any you changed), leaves your own agents and skills alone, never overwrites `.ai-factory/config.md` or `.ai-factory/projects/`, and offers to update templates that differ from the factory copy.
 
 If the agents or skills don't show up after installing, restart the harness; most only scan their folders at startup.
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 Built on [Agent Skills](https://agentskills.io) and subagents in [Claude Code](https://code.claude.com/docs/en/sub-agents), [Cursor](https://cursor.com/docs/subagents) and [OpenCode](https://opencode.ai/docs/agents/), using the orchestrator pattern with context isolation.
