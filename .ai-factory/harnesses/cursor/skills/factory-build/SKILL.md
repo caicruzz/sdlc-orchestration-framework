@@ -94,7 +94,7 @@ If your harness cannot run subagents concurrently, run the same scheduler with o
 
 ### Step B — Implement
 
-1. Increment the task file's **Iteration** count, **unless** this round came from human feedback on the PR or a human-requested conflict fix. Those rounds never count toward `max_iterations`
+1. Increment the task file's **Iteration** count
 2. **Invoke the `factory-coder` subagent** with the task file path, the `config.md` path, the worktree path and the epic branch
 3. The Coder works and commits only in the worktree, and sets status to **`implemented`** (or **`blocked`**, which stops this task's loop; report it to the human)
 4. **Coder autonomy:** implementation choices and optional Reviewer nits stay with the Coder. **Every** Gherkin scenario **must** pass
@@ -136,9 +136,9 @@ After appending, check the iteration count:
 3. Record the PR URL in **`## Delivery`** and set status to **`in-review`**
 4. Tell the human the PR is ready. **Merging it is Quality Gate 3 (task sign-off).** Do not merge it yourself
 
-If the PR has a merge conflict with `factory/<slug>` (for example a sibling merged first), tell the human. **Never** resolve conflicts automatically or force-push. If the human asks for a fix, append their instructions as feedback and run Step B (this does not count toward `max_iterations`).
+If the PR has a merge conflict with `factory/<slug>` (for example a sibling merged first), tell the human. **Never** resolve conflicts automatically or force-push. If the human asks for a fix, append their instructions as feedback, reset **Iteration** to `0` and run Step B. Earlier automated rounds do not count against this fix; its own retries count normally.
 
-If the human requests changes on the PR, append their comments to the task file as **`## Human Feedback`**, set status back to **`in-progress`** and run **Steps B → D** on the same branch and worktree. Human-requested rounds do not count toward `max_iterations`. Push the new commits to the same PR instead of opening another.
+If the human requests changes on the PR, append their comments to the task file as **`## Human Feedback`**, set status back to **`in-progress`** and run **Steps B → D** on the same branch and worktree. Reset **Iteration** to `0` first, so earlier automated rounds do not count against the human round; its own retries count normally. Push the new commits to the same PR instead of opening another.
 
 ### Step E — PR merged (task done)
 
