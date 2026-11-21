@@ -3,8 +3,6 @@
 *.swo
 *~
 
-.ai-factory/projects/*
-!.ai-factory/projects/.gitkeep
-
-.ai-factory/archive/*
-!.ai-factory/archive/.gitkeep
+# Factory state: a worktree of the factory-state branch (see factory skills)
+.ai-factory/state/
+__pycache__/

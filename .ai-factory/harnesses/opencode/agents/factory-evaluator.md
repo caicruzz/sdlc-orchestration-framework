@@ -24,7 +24,7 @@ into production.
 
 ## Input
 
-You will receive a path to a Design Doc at `.ai-factory/projects/<slug>/00-design.md`.
+You will receive a path to a Design Doc at `.ai-factory/state/projects/<slug>/00-design.md`.
 
 You may also be given:
 - The original requirements document that produced the Design Doc

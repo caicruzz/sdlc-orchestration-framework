@@ -52,7 +52,7 @@ If a config key is empty or marked `none`, skip that check.
 Do **not** write or edit any file (running the configured commands is fine).
 Return the full verification report as your final message, following the
 structure of `.ai-factory/templates/verify.md`. The orchestrating agent saves it to
-`.ai-factory/projects/<slug>/verifications/T<id>-verify.md` and updates the task
+`.ai-factory/state/projects/<slug>/verifications/T<id>-verify.md` and updates the task
 file's `## Review & Verification > Verification` section.
 
 End the report with the verdict (`pass` or `fail`) and which checks failed, if

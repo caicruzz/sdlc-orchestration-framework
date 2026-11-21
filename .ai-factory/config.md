@@ -41,6 +41,14 @@ Settings for the `factory-build` skill. Delete a row to use its default.
 | **handoff_after_rounds** | 6 | Review + Verify rounds (across all tasks) one orchestrator session runs before it saves `build-state.md` and asks you to start a fresh one. `0` turns it off |
 | **handoff_at_percent** | 70 | Context usage at which the factory hooks or plugin ask the orchestrator to hand off. Only used when they are installed |
 
+## State
+
+Where the factory keeps Design Docs, task files, reports, build state and archives.
+
+| Setting | Value | Notes |
+|---|---|---|
+| **state_branch** | factory-state | Git branch checked out as a worktree at `.ai-factory/state/` and pushed at every checkpoint, so state survives fresh clones, cloud sessions and other machines. `none` keeps `.ai-factory/state/` as a plain local folder |
+
 ## Conventions
 
 - **Code style**: <!-- e.g. Prettier, Black, rustfmt -->

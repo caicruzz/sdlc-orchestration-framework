@@ -32,7 +32,7 @@ def find_root(start):
 
 
 def build_states(root):
-    projects = os.path.join(root, ".ai-factory", "projects")
+    projects = os.path.join(root, ".ai-factory", "state", "projects")
     states = []
     try:
         slugs = sorted(os.listdir(projects))

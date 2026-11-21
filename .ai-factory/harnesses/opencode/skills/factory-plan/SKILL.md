@@ -9,26 +9,58 @@ description: >-
 
 # Stage 2 (Plan) — Planner
 
-**Stage 2** — Turn an **already approved** Design Doc into **`.ai-factory/projects/<slug>/01-epic.md`** and **`tasks/T<id>-<suffix>.md`**. Stop at the **human approval gate** for the task plan. Do **not** invoke the Coder, Reviewer, or Verifier here.
+**Stage 2** — Turn an **already approved** Design Doc into **`.ai-factory/state/projects/<slug>/01-epic.md`** and **`tasks/T<id>-<suffix>.md`**. Stop at the **human approval gate** for the task plan. Do **not** invoke the Coder, Reviewer, or Verifier here.
 
 ## When to use
 
-- The Design Doc at **`.ai-factory/projects/<slug>/00-design.md`** exists, has passed evaluation, and **the human has approved proceeding** beyond Stage 1
+- The Design Doc at **`.ai-factory/state/projects/<slug>/00-design.md`** exists, has passed evaluation, and **the human has approved proceeding** beyond Stage 1
 - User asks for *tasks*, *epic*, *dependency graph*, *Gherkin tasks*, or *plan the feature*
 
 ## Preconditions
 
-1. **`<slug>`** resolved — project directory **`.ai-factory/projects/<slug>/`**
-2. **`00-design.md`** is present and is the **approved** design to plan from
-3. **`.ai-factory/config.md`** is available for agents that need it
-4. If Stage 1 was skipped out-of-band (e.g. importing a project): ensure **Evaluator** ran and human **explicitly OKs planning** anyway — Stage 3 expects an honest plan from a validated Design Doc
+1. **Open the state** (see [State branch](#state-branch))
+2. **`<slug>`** resolved — project directory **`.ai-factory/state/projects/<slug>/`**
+3. **`00-design.md`** is present and is the **approved** design to plan from
+4. **`.ai-factory/config.md`** is available for agents that need it
+5. If Stage 1 was skipped out-of-band (e.g. importing a project): ensure **Evaluator** ran and human **explicitly OKs planning** anyway — Stage 3 expects an honest plan from a validated Design Doc
+
+## State branch
+
+Everything the factory writes about a feature lives under **`.ai-factory/state/`**: work in progress in **`projects/<slug>/`** (Design Doc, evaluations, epic, task files, reports, **`build-state.md`**) and finished runs in **`archive/<slug>/<ts>/`**. That folder is a git worktree of the **state branch**, so it survives fresh clones, cloud sessions and other machines. **`config.md`** → **`## State`** → **`state_branch`** names the branch (default **`factory-state`**). If it is **`none`**, `.ai-factory/state/` is a plain folder and you skip the rest of this section: state stays on this machine only. The main checkout must gitignore **`.ai-factory/state/`**.
+
+**Open the state** before you read or write anything under `.ai-factory/state/`:
+
+1. If `.ai-factory/state/.git` exists, the worktree is already there. If its branch has an upstream, run `git -C .ai-factory/state pull --rebase`. Then stop here
+2. If `.ai-factory/state/` exists and is not empty, or the old folders `.ai-factory/projects/` or `.ai-factory/archive/` hold files, this is state from before the state branch. Ask the human before migrating it: move `.ai-factory/state/` (if present) to `.ai-factory/state.local-backup/`, run step 3, copy the old content into `.ai-factory/state/projects/` and `.ai-factory/state/archive/` (if a slug exists on both sides, ask which to keep), **save the state**, and tell the human which old folders they can delete
+3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>`:
+   - If that works, or a local `<state_branch>` branch exists, run `git worktree add .ai-factory/state <state_branch>`. If the branch is not on the remote yet, also run `git -C .ai-factory/state push -u origin <state_branch>`
+   - If neither exists, create the branch with no files, check it out and push it:
+
+     ```bash
+     empty_tree=$(git hash-object -t tree /dev/null)
+     git branch <state_branch> "$(git commit-tree "$empty_tree" -m 'factory: start state branch')"
+     git worktree add .ai-factory/state <state_branch>
+     git -C .ai-factory/state push -u origin <state_branch>
+     ```
+
+**Save the state** at each checkpoint this skill names:
+
+```bash
+git -C .ai-factory/state add -A
+git -C .ai-factory/state commit -m "factory(<slug>): <checkpoint>"   # skip when there is nothing to commit
+git -C .ai-factory/state push
+```
+
+If the push is rejected, run `git -C .ai-factory/state pull --rebase` and push again. If the rebase conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
 
 ## Procedure
 
-1. **Invoke the `factory-planner` subagent** with the path to the **approved** Design Doc, e.g. **`.ai-factory/projects/<slug>/00-design.md`** (verbatim path in the Planner invocation prompt)
+1. **Invoke the `factory-planner` subagent** with the path to the **approved** Design Doc, e.g. **`.ai-factory/state/projects/<slug>/00-design.md`** (verbatim path in the Planner invocation prompt)
 2. The Planner **reads the Design Doc only** and produces:
-   - **`01-epic.md`** at **`.ai-factory/projects/<slug>/01-epic.md`**, following **`.ai-factory/templates/epic.md`**
-   - **`tasks/T<id>-<slug-or-name>.md`** under **`.ai-factory/projects/<slug>/tasks/`**, one file per task, following **`.ai-factory/templates/task.md`**
+   - **`01-epic.md`** at **`.ai-factory/state/projects/<slug>/01-epic.md`**, following **`.ai-factory/templates/epic.md`**
+   - **`tasks/T<id>-<slug-or-name>.md`** under **`.ai-factory/state/projects/<slug>/tasks/`**, one file per task, following **`.ai-factory/templates/task.md`**
+
+   Then **save the state**. Do the same after every revision of the plan
 
 ### Epic and graph (required shape)
 
@@ -68,9 +100,9 @@ Pass **only** the inputs this skill names (paths, task IDs) — subagents do not
 
 | Output | Path |
 |--------|------|
-| Epic + graph | `.ai-factory/projects/<slug>/01-epic.md` |
-| Task files | `.ai-factory/projects/<slug>/tasks/T<id>-<suffix>.md` |
-| Design Doc (read-only input) | `.ai-factory/projects/<slug>/00-design.md` |
+| Epic + graph | `.ai-factory/state/projects/<slug>/01-epic.md` |
+| Task files | `.ai-factory/state/projects/<slug>/tasks/T<id>-<suffix>.md` |
+| Design Doc (read-only input) | `.ai-factory/state/projects/<slug>/00-design.md` |
 | Epic template | `.ai-factory/templates/epic.md` |
 | Task template | `.ai-factory/templates/task.md` |
 

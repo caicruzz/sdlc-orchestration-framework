@@ -33,7 +33,7 @@ function findRoot(start: string): string | undefined {
 }
 
 function readBuildStates(root: string): BuildState[] {
-  const projects = path.join(root, ".ai-factory", "projects")
+  const projects = path.join(root, ".ai-factory", "state", "projects")
   let slugs: string[]
   try {
     slugs = readdirSync(projects, { withFileTypes: true })
