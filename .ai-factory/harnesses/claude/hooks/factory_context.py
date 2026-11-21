@@ -25,7 +25,6 @@ import json
 import os
 import re
 import sys
-import tempfile
 
 DEFAULT_PERCENT = 70
 SECOND_WARNING = 90
@@ -119,8 +118,14 @@ def window_arg(argv):
     return None
 
 
-def warned_level(session_id):
-    path = os.path.join(tempfile.gettempdir(), "factory-context-%s" % re.sub(r"[^A-Za-z0-9_-]", "", session_id))
+def marker_path(root, session_id):
+    """Warn-level marker, kept in the gitignored projects folder of this repo."""
+    safe = re.sub(r"[^A-Za-z0-9_-]", "", session_id) or "unknown"
+    return os.path.join(root, ".ai-factory", "projects", ".context-warnings", safe)
+
+
+def warned_level(root, session_id):
+    path = marker_path(root, session_id)
     try:
         with open(path, encoding="utf-8") as handle:
             return path, int(handle.read().strip() or 0)
@@ -147,10 +152,11 @@ def post_tool_use(data, root, states):
     if percent < threshold:
         return
     level = SECOND_WARNING if percent >= SECOND_WARNING else int(threshold)
-    marker, previous = warned_level(data.get("session_id") or "unknown")
+    marker, previous = warned_level(root, data.get("session_id") or "unknown")
     if previous >= level:
         return
     try:
+        os.makedirs(os.path.dirname(marker), exist_ok=True)
         with open(marker, "w", encoding="utf-8") as handle:
             handle.write(str(level))
     except OSError:
@@ -164,8 +170,14 @@ def post_tool_use(data, root, states):
     )
 
 
-def session_start(data, states):
+def session_start(data, root, states):
     source = data.get("source")
+    if source in ("compact", "clear"):
+        # Usage starts low again, so the next crossing should warn again.
+        try:
+            os.remove(marker_path(root, data.get("session_id") or "unknown"))
+        except OSError:
+            pass
     if source == "compact":
         active = [state for state in states if state["status"] == "active"]
         if active:
@@ -199,7 +211,7 @@ def main():
     if event == "PostToolUse":
         post_tool_use(data, root, states)
     elif event == "SessionStart":
-        session_start(data, states)
+        session_start(data, root, states)
 
 
 if __name__ == "__main__":

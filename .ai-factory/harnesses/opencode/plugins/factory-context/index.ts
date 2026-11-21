@@ -15,12 +15,22 @@
 // Notes are added to the outgoing request only; nothing is written to history.
 
 import { Plugin } from "@opencode/plugin"
-import { readdirSync, readFileSync } from "node:fs"
+import { existsSync, readdirSync, readFileSync } from "node:fs"
 import path from "node:path"
 
 type BuildState = { slug: string; file: string; status: string }
 
 const DEFAULT_PERCENT = 70
+
+function findRoot(start: string): string | undefined {
+  let dir = path.resolve(start)
+  while (true) {
+    if (existsSync(path.join(dir, ".ai-factory"))) return dir
+    const parent = path.dirname(dir)
+    if (parent === dir) return undefined
+    dir = parent
+  }
+}
 
 function readBuildStates(root: string): BuildState[] {
   const projects = path.join(root, ".ai-factory", "projects")
@@ -60,8 +70,11 @@ function handoffPercent(root: string): number {
 export default Plugin.define({
   id: "factory-context",
   async setup(ctx) {
-    const root = ctx.location.directory
+    const location: any = ctx.location
+    const root = findRoot(location.project?.directory ?? location.directory) ?? findRoot(location.directory)
+    if (!root) return
     const topLevel = new Map<string, boolean>()
+    const windows = new Map<string, number>()
 
     const isTopLevel = async (sessionID: string) => {
       const known = topLevel.get(sessionID)
@@ -73,12 +86,17 @@ export default Plugin.define({
     }
 
     const inputWindow = async (ref: { id: string; providerID: string }) => {
+      const key = `${ref.providerID}/${ref.id}`
+      const known = windows.get(key)
+      if (known !== undefined) return known
       const listed: any = await ctx.model.list()
       const models: any[] = Array.isArray(listed) ? listed : (listed?.data ?? [])
       const model = models.find((item) => item.id === ref.id && item.providerID === ref.providerID)
       const limit = model?.limit
       if (!limit) return 0
-      return limit.input && limit.context ? Math.min(limit.input, limit.context) : limit.input || limit.context || 0
+      const window = limit.input && limit.context ? Math.min(limit.input, limit.context) : limit.input || limit.context || 0
+      if (window > 0) windows.set(key, window)
+      return window
     }
 
     await ctx.session.hook("context", async (event) => {

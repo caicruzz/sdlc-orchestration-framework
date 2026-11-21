@@ -80,8 +80,7 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 
 ## Step 0 — Set up the epic branch (once per build)
 
-If **`build-state.md`** exists with Status **`active`** or **`handoff-pending`**, follow **[Resume](#resume)** instead of starting fresh.
-
+If **`build-state.md`** exists with Status **`handoff-pending`** or **`active`**, follow **[Resume](#resume)** instead of starting fresh.
 
 1. Resolve `base_branch` (setting, else the current branch). Tell the human which base you are using
 2. If `origin/factory/<slug>` does not exist, push the epic branch: reuse the local `factory/<slug>` if there is one, otherwise create it from `base_branch`, then `git push -u origin factory/<slug>`
@@ -103,7 +102,9 @@ Before launching anything in step 3, check the [handoff triggers](#context-hando
 
 ## Resume
 
-Use when **`build-state.md`** exists with Status **`active`** or **`handoff-pending`**: an earlier orchestrator handed off, or its session ended mid-build.
+Use when **`build-state.md`** exists with Status **`handoff-pending`** (an earlier orchestrator handed off) or **`active`** (an orchestrator was running).
+
+**On `active`, confirm first.** Another orchestrator may still be running this build in another session, and two would launch Coders on the same tasks. Show the human the file's **Last updated** time and ask them to confirm that no other session is still building `<slug>`. Resume only after they confirm. On **`handoff-pending`**, resume without asking.
 
 1. Read **`build-state.md`**, **`config.md`**, **`01-epic.md`** and every task file. Do not rely on anything from an earlier conversation
 2. Run **Step 0** (it is safe to repeat)

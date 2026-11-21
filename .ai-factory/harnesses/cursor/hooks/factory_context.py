@@ -63,11 +63,12 @@ def pre_compact(data, states):
     usage = data.get("context_usage_percent")
     at = " at %s%%" % round(float(usage)) if isinstance(usage, (int, float)) else ""
     slugs = ", ".join(state["slug"] for state in active)
+    resume = " or ".join("resume the factory build for %s" % state["slug"] for state in active)
     print(json.dumps({
         "user_message": (
             "Solo AI Factory: Cursor is compacting the chat%s while the factory build for %s is running. "
-            "Ask the orchestrator to hand off, then start a new chat and say: resume the factory build for %s."
-            % (at, slugs, active[0]["slug"])
+            "Ask the orchestrator to hand off, then start a new chat and say: %s."
+            % (at, slugs, resume)
         )
     }))
 
