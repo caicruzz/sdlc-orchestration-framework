@@ -37,6 +37,17 @@ to the target project root, or to `~` for user scope.
    `description`; to inherit, leave it out (see [Models](#models)).
    Change nothing else in the copied files; their frontmatter is otherwise
    already in the format OpenCode expects.
+5. **Offer the context plugin.** Explain that `factory-build` can hand off to a
+   fresh orchestrator before its context fills, and that the plugin makes this
+   precise: it measures context usage before every model request, warns the
+   orchestrator at `handoff_at_percent` (`config.md`, default 70), and points
+   it back to `build-state.md` after a compaction. It needs OpenCode V2. Ask
+   whether to install it. If yes, copy
+   `<factory>/.ai-factory/harnesses/opencode/plugins/factory-context/` to
+   `.opencode/plugins/factory-context/` (project) or
+   `~/.config/opencode/plugins/factory-context/` (user). If that directory
+   already exists and differs, ask before overwriting. Without the plugin,
+   handoff still works from the `handoff_after_rounds` count.
 
 ## Notes
 
@@ -60,4 +71,4 @@ installed agent file. A reinstall keeps the current value unless the user picks 
 
 ## Verify
 
-Confirm the six `factory-*` agents are available as subagents and the four `factory-*` skills are listed. Restart OpenCode if they do not show up.
+Confirm the six `factory-*` agents are available as subagents and the four `factory-*` skills are listed. Restart OpenCode if they do not show up. If you installed the context plugin, run `opencode plugin list` and confirm `factory-context` appears.

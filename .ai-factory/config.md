@@ -38,6 +38,8 @@ Settings for the `factory-build` skill. Delete a row to use its default.
 | **max_iterations** | 3 | Most Coder passes per task before it is set `blocked` and escalated to you |
 | **worktree_dir** | ../<repo>-worktrees | Where task worktrees go, relative to the repo root. Keep it outside the repo |
 | **base_branch** | <!-- e.g. main; leave empty to use the branch checked out when the build starts --> | The epic branch `factory/<slug>` starts here, and the final PR targets it |
+| **handoff_after_rounds** | 6 | Review + Verify rounds (across all tasks) one orchestrator session runs before it saves `build-state.md` and asks you to start a fresh one. `0` turns it off |
+| **handoff_at_percent** | 70 | Context usage at which the factory hooks or plugin ask the orchestrator to hand off. Only used when they are installed |
 
 ## Conventions
 
