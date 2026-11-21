@@ -5,6 +5,7 @@
 # differ per harness. Below the frontmatter, agent prompts must be identical,
 # and skill files must be identical except for the "## Invoking subagents"
 # section, which explains the harness's own way to call a subagent.
+# Every skill must also carry an identical "## State branch" section.
 #
 # Requires bash 3.2+ and standard POSIX tools.
 
@@ -40,6 +41,12 @@ frontmatter_field() {
          if (v ~ /^[>|][-+]?[ \t]*$/) { block = 1; next }
          print v; exit
        }' "$1"
+}
+
+# state_section <file> : print the "## State branch" section of a skill.
+state_section() {
+  body "$1" | awk '/^## / { keep = ($0 == "## State branch") }
+                   keep { print }'
 }
 
 # list_files <harness> : relative paths of all agent and skill files.
@@ -92,6 +99,22 @@ for h in "$@"; do
         cmp -s "$a" "$b" || fail "$h/$rel: differs from $ref/$rel" ;;
     esac
   done
+done
+
+# Every skill carries the same "## State branch" section (it is copied, not
+# shared, so each skill stays self-contained). Harness copies are compared
+# above, so checking the reference harness covers all of them.
+first_state=""
+for f in "$HARNESS_DIR/$ref"/skills/*/SKILL.md; do
+  dir="$(basename "$(dirname "$f")")"
+  section="$(state_section "$f")"
+  if [ -z "$section" ]; then
+    fail "$ref: skills/$dir/SKILL.md has no ## State branch section"
+  elif [ -z "$first_state" ]; then
+    first_state="$section" first_dir="$dir"
+  elif [ "$section" != "$first_state" ]; then
+    fail "$ref: skills/$dir/SKILL.md ## State branch differs from skills/$first_dir/SKILL.md"
+  fi
 done
 
 if [ "$status" -eq 0 ]; then

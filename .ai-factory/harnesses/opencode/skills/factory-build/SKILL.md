@@ -43,11 +43,12 @@ Everything the factory writes about a feature lives under **`.ai-factory/state/`
 
 **Open the state** before you read or write anything under `.ai-factory/state/`:
 
-1. If `.ai-factory/state/.git` exists, the worktree is already there. If its branch has an upstream, run `git -C .ai-factory/state pull --rebase`. Then stop here
+1. If `.ai-factory/state/.git` exists, the worktree is already there. **Sync it**: run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>`. If the remote has no `<state_branch>` yet, run `git -C .ai-factory/state push -u origin <state_branch>` instead. Then stop here
 2. If `.ai-factory/state/` exists and is not empty, or the old folders `.ai-factory/projects/` or `.ai-factory/archive/` hold files, this is state from before the state branch. Ask the human before migrating it: move `.ai-factory/state/` (if present) to `.ai-factory/state.local-backup/`, run step 3, copy the old content into `.ai-factory/state/projects/` and `.ai-factory/state/archive/` (if a slug exists on both sides, ask which to keep), **save the state**, and tell the human which old folders they can delete
-3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>`:
-   - If that works, or a local `<state_branch>` branch exists, run `git worktree add .ai-factory/state <state_branch>`. If the branch is not on the remote yet, also run `git -C .ai-factory/state push -u origin <state_branch>`
-   - If neither exists, create the branch with no files, check it out and push it:
+3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>` (the explicit refspec also works in single-branch clones, which cloud agents often use), then:
+   - If a local `<state_branch>` branch exists: `git worktree add .ai-factory/state <state_branch>`, then **sync it** as in step 1
+   - Else, if the fetch worked: `git worktree add .ai-factory/state -b <state_branch> origin/<state_branch>`
+   - Else, create the branch with no files, check it out and push it:
 
      ```bash
      empty_tree=$(git hash-object -t tree /dev/null)
@@ -61,10 +62,10 @@ Everything the factory writes about a feature lives under **`.ai-factory/state/`
 ```bash
 git -C .ai-factory/state add -A
 git -C .ai-factory/state commit -m "factory(<slug>): <checkpoint>"   # skip when there is nothing to commit
-git -C .ai-factory/state push
+git -C .ai-factory/state push -u origin <state_branch>
 ```
 
-If the push is rejected, run `git -C .ai-factory/state pull --rebase` and push again. If the rebase conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
+If the push is rejected, run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>` and push again. If the rebase or the autostash conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
 
 ## Build settings (`config.md` → `## Build`)
 
@@ -86,9 +87,9 @@ If the push is rejected, run `git -C .ai-factory/state pull --rebase` and push a
 | Task worktree | `<worktree_dir>/<slug>-T<id>` |
 
 - **Never** commit to, push to, or merge into the **default branch** or **`base_branch`**. Only the final PR targets it, and the human merges it
-- **Task files, reports and `config.md` stay in the main checkout.** `.ai-factory/state/projects/` is the single source of truth for status and is not part of any task worktree. Pass **absolute** main-checkout paths to subagents
+- **Task files and reports stay in `.ai-factory/state/` (the state worktree), and `config.md` stays in the main checkout; never use copies in a task worktree.** `.ai-factory/state/projects/` is the single source of truth for status. Pass **absolute** paths to subagents
 - Code changes happen **only** inside a task's worktree, committed to its task branch
-- **`build-state.md`** (see [Build state](#build-state)) lives with the task files in the main checkout
+- **`build-state.md`** (see [Build state](#build-state)) lives with the task files in the state worktree
 
 ## Context isolation (strict)
 
@@ -114,7 +115,7 @@ If **`build-state.md`** exists with Status **`handoff-pending`** or **`active`**
 
 1. Resolve `base_branch` (setting, else the current branch). Tell the human which base you are using
 2. If `origin/factory/<slug>` does not exist, push the epic branch: reuse the local `factory/<slug>` if there is one, otherwise create it from `base_branch`, then `git push -u origin factory/<slug>`
-3. Otherwise fetch it: `git fetch origin factory/<slug>`. Step A always branches from `origin/factory/<slug>`
+3. Otherwise fetch it: `git fetch origin factory/<slug>:refs/remotes/origin/factory/<slug>` (the explicit refspec also works in single-branch clones, which cloud agents often use). Step A always branches from `origin/factory/<slug>`
 
 ## Scheduler
 
@@ -186,8 +187,8 @@ Do no more build work after handing off; the next orchestrator owns the build.
 
 ### Step A — Create the task's branch and worktree
 
-1. `git fetch origin factory/<slug>` so dependents start from the latest merged prerequisites
-2. `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>`. If the worktree already exists (resumed build), reuse it. If only the branch exists, locally or as `origin/factory/<slug>/T<id>` (a resumed build on a fresh clone), add the worktree on that branch instead: `git worktree add <worktree_dir>/<slug>-T<id> factory/<slug>/T<id>`
+1. `git fetch origin factory/<slug>:refs/remotes/origin/factory/<slug>` so dependents start from the latest merged prerequisites
+2. `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>`. If the worktree already exists (resumed build), reuse it. If only the branch exists, locally or on the remote (a resumed build on a fresh clone), add the worktree on that branch instead. For a local branch, run `git worktree add <worktree_dir>/<slug>-T<id> factory/<slug>/T<id>`. For a remote-only branch, run `git fetch origin factory/<slug>/T<id>:refs/remotes/origin/factory/<slug>/T<id>`, then `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>/T<id>`
 3. If `config.md` has an **Install** command, run it inside the worktree
 4. In the task file, fill **`## Delivery`** (branch, worktree, iteration `0 / <max_iterations>`) and set status to **`in-progress`**
 
@@ -291,7 +292,7 @@ factory-verifier  Verify T001
 
 | Item | Value |
 |------|--------|
-| Task files | `.ai-factory/state/projects/<slug>/tasks/T<id>-*.md` (main checkout) |
+| Task files | `.ai-factory/state/projects/<slug>/tasks/T<id>-*.md` (state worktree) |
 | Order | **`01-epic.md`** task dependency graph; a task is ready when all prerequisites are `done` |
 | Statuses | `draft` → `in-progress` → `implemented` → `in-review` → `done`; `blocked` on Coder blocker or retry cap |
 | Parallel step | **`factory-reviewer`** + **`factory-verifier`** per iteration; tasks themselves run concurrently |

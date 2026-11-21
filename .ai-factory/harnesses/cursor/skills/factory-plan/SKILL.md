@@ -30,11 +30,12 @@ Everything the factory writes about a feature lives under **`.ai-factory/state/`
 
 **Open the state** before you read or write anything under `.ai-factory/state/`:
 
-1. If `.ai-factory/state/.git` exists, the worktree is already there. If its branch has an upstream, run `git -C .ai-factory/state pull --rebase`. Then stop here
+1. If `.ai-factory/state/.git` exists, the worktree is already there. **Sync it**: run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>`. If the remote has no `<state_branch>` yet, run `git -C .ai-factory/state push -u origin <state_branch>` instead. Then stop here
 2. If `.ai-factory/state/` exists and is not empty, or the old folders `.ai-factory/projects/` or `.ai-factory/archive/` hold files, this is state from before the state branch. Ask the human before migrating it: move `.ai-factory/state/` (if present) to `.ai-factory/state.local-backup/`, run step 3, copy the old content into `.ai-factory/state/projects/` and `.ai-factory/state/archive/` (if a slug exists on both sides, ask which to keep), **save the state**, and tell the human which old folders they can delete
-3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>`:
-   - If that works, or a local `<state_branch>` branch exists, run `git worktree add .ai-factory/state <state_branch>`. If the branch is not on the remote yet, also run `git -C .ai-factory/state push -u origin <state_branch>`
-   - If neither exists, create the branch with no files, check it out and push it:
+3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>` (the explicit refspec also works in single-branch clones, which cloud agents often use), then:
+   - If a local `<state_branch>` branch exists: `git worktree add .ai-factory/state <state_branch>`, then **sync it** as in step 1
+   - Else, if the fetch worked: `git worktree add .ai-factory/state -b <state_branch> origin/<state_branch>`
+   - Else, create the branch with no files, check it out and push it:
 
      ```bash
      empty_tree=$(git hash-object -t tree /dev/null)
@@ -48,10 +49,10 @@ Everything the factory writes about a feature lives under **`.ai-factory/state/`
 ```bash
 git -C .ai-factory/state add -A
 git -C .ai-factory/state commit -m "factory(<slug>): <checkpoint>"   # skip when there is nothing to commit
-git -C .ai-factory/state push
+git -C .ai-factory/state push -u origin <state_branch>
 ```
 
-If the push is rejected, run `git -C .ai-factory/state pull --rebase` and push again. If the rebase conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
+If the push is rejected, run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>` and push again. If the rebase or the autostash conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
 
 ## Procedure
 

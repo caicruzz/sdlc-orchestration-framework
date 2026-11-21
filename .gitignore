@@ -5,4 +5,7 @@
 
 # Factory state: a worktree of the factory-state branch (see factory skills)
 .ai-factory/state/
+# Pre-state-branch locations, kept ignored until local content is migrated
+.ai-factory/projects/
+.ai-factory/archive/
 __pycache__/
