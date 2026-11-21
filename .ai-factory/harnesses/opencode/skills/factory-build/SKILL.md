@@ -93,7 +93,7 @@ When **every** planned task for the slug is **`done`**, give the human a short *
 
 ## Invoking subagents
 
-The subagents are installed in `.opencode/agents/`. Wherever this skill says *invoke the `factory-<name>` subagent*, call the `subagent` tool with the agent `factory-<name>` and the input as the prompt.
+Wherever this skill says *invoke the `factory-<name>` subagent*, call the `subagent` tool with the agent `factory-<name>` and the input as the prompt.
 
 Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
 

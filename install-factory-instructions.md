@@ -64,6 +64,9 @@ missing. Offer (do not force) to add these lines to the project's `.gitignore`:
 
 ## 6. Report
 
-Tell the user what you installed and where, what you skipped because it already
-existed, and that they should edit `.ai-factory/config.md` for their stack.
-Delete the temporary clone if you made one.
+Tell the user what you installed and where, and what you skipped because it
+already existed. For skipped `templates/` files, list the ones that differ from
+the factory copy and offer to update them (a reinstall otherwise keeps stale
+templates). Never update `config.md` this way; it holds the user's settings.
+Remind the user to edit `.ai-factory/config.md` for their stack. Delete the
+temporary clone if you made one.

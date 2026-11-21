@@ -63,7 +63,7 @@ description: >-
 
 ## Invoking subagents
 
-The subagents are installed in `.claude/agents/`. Wherever this skill says *invoke the `factory-<name>` subagent*, call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
+Wherever this skill says *invoke the `factory-<name>` subagent*, call the Agent (Task) tool with `subagent_type: factory-<name>` and the input as the prompt.
 
 Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
 

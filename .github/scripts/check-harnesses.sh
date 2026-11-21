@@ -29,11 +29,17 @@ skill_body() {
                    !skip { print }'
 }
 
-# frontmatter_field <file> <key> : print a top-level frontmatter value.
+# frontmatter_field <file> <key> : print a top-level frontmatter value. For a
+# block scalar (> or |, with optional - or +), print its first content line.
 frontmatter_field() {
   awk -v key="$2" 'NR == 1 && $0 == "---" { fm = 1; next }
        fm && $0 == "---" { exit }
-       fm && index($0, key ": ") == 1 { print substr($0, length(key) + 3); exit }' "$1"
+       block { if ($0 ~ /^[ \t]+[^ \t]/) { sub(/^[ \t]+/, ""); print }; exit }
+       fm && index($0, key ": ") == 1 {
+         v = substr($0, length(key) + 3)
+         if (v ~ /^[>|][-+]?[ \t]*$/) { block = 1; next }
+         print v; exit
+       }' "$1"
 }
 
 # list_files <harness> : relative paths of all agent and skill files.
@@ -60,6 +66,15 @@ for h in "$@"; do
     name="$(frontmatter_field "$f" name)"
     [ "$name" = "$dir" ] || fail "$h: skills/$dir/SKILL.md name '$name' does not match folder"
     [ -n "$(frontmatter_field "$f" description)" ] || fail "$h: skills/$dir/SKILL.md has no description"
+  done
+
+  for f in "$HARNESS_DIR/$h"/agents/*.md; do
+    file="$(basename "$f" .md)"
+    name="$(frontmatter_field "$f" name)"
+    # OpenCode-style agents take their name from the filename and omit `name`.
+    [ -z "$name" ] || [ "$name" = "$file" ] \
+      || fail "$h: agents/$file.md name '$name' does not match filename"
+    [ -n "$(frontmatter_field "$f" description)" ] || fail "$h: agents/$file.md has no description"
   done
 
   [ "$h" = "$ref" ] && continue

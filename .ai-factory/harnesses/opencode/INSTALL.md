@@ -13,9 +13,15 @@ to the target project root, or to `~` for user scope.
 
 ## Steps
 
-1. **Remove the previous install.** In the chosen agents directory, delete only
-   files named `factory-*.md`. In the chosen skills directory, delete only
-   directories named `factory-*`. Leave every other agent and skill alone.
+1. **Check for a previous install.** In the chosen agents directory, look for
+   files named `factory-*.md`; in the chosen skills directory, look for
+   directories named `factory-*`. Never touch any other agent or skill.
+   - Existing copies identical to the new ones: replace them without asking.
+   - Existing copies that differ from the new ones (the user may have
+     customized them): list them and ask the user before overwriting. Skip any
+     the user wants to keep.
+   - Existing `factory-*` files with no counterpart in the new set: list them
+     and ask the user before deleting.
 2. **Copy agents.** Copy every file in `<factory>/.ai-factory/harnesses/opencode/agents/`
    into the agents directory, unchanged.
 3. **Copy skills.** Copy every directory in `<factory>/.ai-factory/harnesses/opencode/skills/`

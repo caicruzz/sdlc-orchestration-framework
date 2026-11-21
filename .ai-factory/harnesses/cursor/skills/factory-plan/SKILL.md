@@ -60,7 +60,7 @@ The epic **must** include **`## Task dependency graph`** with a valid fenced **`
 
 ## Invoking subagents
 
-The subagents are installed in `.cursor/agents/`. Wherever this skill says *invoke the `factory-<name>` subagent*, delegate to the subagent by name (e.g. `/factory-<name> <input>`).
+Wherever this skill says *invoke the `factory-<name>` subagent*, delegate to the subagent by name (e.g. `/factory-<name> <input>`).
 
 Pass **only** the inputs this skill names (paths, task IDs) — subagents do not see this conversation. Users may also invoke the same subagents manually; behavior must match this procedure.
 

@@ -122,7 +122,7 @@ In your project, ask the agent in your harness (Claude Code, Cursor or OpenCode)
 Follow https://github.com/caicruzz/soloAIfactory/blob/main/install-factory-instructions.md to install Solo AI Factory.
 ```
 
-The agent identifies its harness, asks whether to install for this project or for your user, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It only ever replaces `factory-*` agents and skills; your other agents and skills are untouched.
+The agent identifies its harness, asks whether to install for this project or for your user, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It only ever touches `factory-*` agents and skills, and asks before overwriting any you customized; your other agents and skills are untouched. On a reinstall it lists templates that differ from the factory copy and offers to update them.
 
 ### 2. Configure your project
 
@@ -379,7 +379,7 @@ Agent prompts and skill content are duplicated across harness folders on purpose
 - a harness is missing an agent or skill file that another has,
 - an agent's prompt (everything below the frontmatter) differs between harnesses,
 - a skill differs between harnesses outside its `## Invoking subagents` section, or
-- a skill's `name` does not match its folder.
+- a skill's `name` does not match its folder, an agent's `name` (where the harness uses one) does not match its filename, or a skill or agent has no `description`.
 
 ### Project-level vs user-level
 
@@ -463,7 +463,7 @@ The factory's procedure (paths, Evaluator, Planner, build loop, human quality ga
 
 ## Troubleshooting
 
-For a clean reinstall, ask your agent to follow [`install-factory-instructions.md`](install-factory-instructions.md) again. It replaces only `factory-*` agents and skills, leaves your own agents and skills alone, and never overwrites `.ai-factory/config.md`, `.ai-factory/templates/`, or `.ai-factory/projects/`.
+For a clean reinstall, ask your agent to follow [`install-factory-instructions.md`](install-factory-instructions.md) again. It replaces only `factory-*` agents and skills (asking first about any you changed), leaves your own agents and skills alone, never overwrites `.ai-factory/config.md` or `.ai-factory/projects/`, and offers to update templates that differ from the factory copy.
 
 If the agents or skills don't show up after installing, restart the harness; most only scan their folders at startup.
 
