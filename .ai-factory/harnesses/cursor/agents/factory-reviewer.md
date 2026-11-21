@@ -15,7 +15,10 @@ specifications and produce structured feedback. You NEVER edit code.
 
 You will receive:
 - A path to a task file at `.ai-factory/projects/<slug>/tasks/T<id>-<name>.md`
-- Access to the code changes (git diff or file reads)
+- A **worktree path** where the task branch is checked out, and the **epic
+  branch** it was created from. Read the changes with
+  `git -C <worktree> diff origin/<epic branch>...HEAD` and read files under the
+  worktree, not the main checkout
 
 You do NOT have access to the Design Doc, Epic, or any other task.
 

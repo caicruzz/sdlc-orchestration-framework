@@ -36,36 +36,34 @@ Path A: No Design Doc yet         Path B: Design Doc already exists
      Quality Gate 2: Task Plan Approval
                    │
                    ▼
-             Parallel Fork <─────────────────────┐
-                   │                             │
-      ┌────────────┼────────────┐                │
-      ▼            ▼            ▼                │
-   [Coder]      [Coder]      [Coder]             │
-      │            │            │                │
-      │   implements & tests    │                │
-      │            │            │                │
-      └────────────┼────────────┘                │
-                   │                             │
-                   ▼                             │
-          Parallel Inspection Fork               │
-                   │                             │
-           ┌───────┴───────┐                     │
-           ▼               ▼                     │
-      [Reviewer]      [Verifier]                 │
-     code quality     tests/lint/build           │
-           │               │                     │
-           └───────┬───────┘                     │
-                   │                             │
-                   ▼                             │
-              Both pass? ──(No: Retry)───────────┘
-                   │
-                 (Yes)
-                   │
+   Ready tasks (all prerequisites done) <─────────────┐
+                   │                                  │
+     run in parallel, each on its own                 │
+     branch + worktree (max_concurrent_tasks)         │
+                   │                                  │
+                   ▼                                  │
+               [Coder] <────────────────┐             │
+           implements & tests           │             │
+                   │                    │             │
+           ┌───────┴───────┐            │             │
+           ▼               ▼            │             │
+      [Reviewer]      [Verifier]        │             │
+     code quality   tests/lint/build    │             │
+           │               │            │             │
+           └───────┬───────┘            │             │
+                   ▼                    │             │
+              Both pass? ──(No: retry)──┘             │
+                   │   at max_iterations:             │
+                 (Yes) blocked + escalated to you     │
+                   │                                  │
+                   ▼                                  │
+       PR per task into epic branch                   │
+                   │                                  │
+                   ▼                                  │
+  Quality Gate 3: you merge the task PR ──────────────┘
+                   │   (unblocks dependent tasks)
                    ▼
-     Quality Gate 3: Task Sign-off
-                   │
-                   ▼
-                 Ship
+  Quality Gate 4: you merge the epic PR → Ship
 ```
 
 ## 🏭 The Line: Agents as Stations
@@ -75,9 +73,9 @@ Path A: No Design Doc yet         Path B: Design Doc already exists
 | **Architect** | Produces the Design Doc from requirements                               | Requirements + codebase exploration | Design Doc at `.ai-factory/projects/<slug>/00-design.md`                       | inherit | no       |
 | **Evaluator** | Critically evaluates Design Docs — finds flaws, blind spots, trade-offs | Design Doc + codebase exploration   | Returns critique as text (main agent persists)                                 | inherit | yes      |
 | **Planner**   | Decomposes the Design Doc into self-contained Gherkin-based tasks       | Design Doc only                     | Epic at `01-epic.md` + tasks at `.ai-factory/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
-| **Coder**     | Implements task + writes tests from Gherkin scenarios                   | Task file + config (+ full repo)    | Production code + tests                                                        | inherit | no       |
+| **Coder**     | Implements task + writes tests from Gherkin scenarios                   | Task file + config (+ full repo in its worktree) | Production code + tests, committed on the task branch                 | inherit | no       |
 | **Reviewer**  | Reviews code quality, bugs, scenario coverage                           | ONE task + code diff                | Returns review report (main agent persists)                                    | inherit | yes      |
-| **Verifier**  | Runs tests, lint, typecheck, build mechanically                         | Config only                         | Returns verification report (main agent persists)                              | inherit | yes      |
+| **Verifier**  | Runs tests, lint, typecheck, build mechanically                         | Config + task worktree              | Returns verification report (main agent persists)                              | inherit | yes      |
 
 ### Context Isolation
 
@@ -86,9 +84,9 @@ Like stations on a production line, each agent receives only the inputs it needs
 - **Architect** → reads requirements and codebase, writes the Design Doc
 - **Evaluator** → reads the Design Doc and codebase, returns critique, never edits files
 - **Planner** → reads the Design Doc only, writes self-contained tasks
-- **Coder** → invoked with one task file + config (Design Doc/epic not in prompt); may read and edit anywhere in the repo per task scope
-- **Reviewer** → reads ONE task + code changes, never edits code
-- **Verifier** → reads config only, has no knowledge of tasks or features
+- **Coder** → invoked with one task file + config + its task worktree (Design Doc/epic not in prompt); may read and edit anywhere in that worktree per task scope
+- **Reviewer** → reads ONE task + the task branch's diff, never edits code
+- **Verifier** → reads config only and runs it in the task worktree, has no knowledge of tasks or features
 
 The Planner is the critical translation layer. It must write tasks detailed enough that the Coder does not need the Design Doc in its prompt (the Coder may still browse the repo).
 
@@ -122,7 +120,7 @@ In your project, ask the agent in your harness (Claude Code, Cursor or OpenCode)
 Follow https://github.com/caicruzz/soloAIfactory/blob/main/install-factory-instructions.md to install Solo AI Factory.
 ```
 
-The agent identifies its harness, asks whether to install for this project or for your user, lets you confirm or change each agent's model, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It only ever touches `factory-*` agents and skills, and asks before overwriting any you customized; your other agents and skills are untouched. On a reinstall it lists templates that differ from the factory copy and offers to update them.
+The agent identifies its harness, asks whether to install for this project or for your user, lets you confirm or change each agent's model, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It also offers to add a `factory-checks` GitHub Actions workflow that runs your `config.md` checks on every pull request. It only ever touches `factory-*` agents and skills, and asks before overwriting any you customized; your other agents and skills are untouched. On a reinstall it lists templates that differ from the factory copy and offers to update them.
 
 ### 2. Configure your project
 
@@ -182,17 +180,17 @@ The skill requires `## Task dependency graph` in `01-epic.md` and stops at human
 
 ### 🔨 Stage 3: Build
 
-For each task (respect dependency ordering from `01-epic.md`), follow [`factory-build`](.ai-factory/harnesses/claude/skills/factory-build/SKILL.md), for example: *Implement T001 for `<slug>`* or *run the build loop for the next task*.
+Follow [`factory-build`](.ai-factory/harnesses/claude/skills/factory-build/SKILL.md), for example: *Build the epic for `<slug>`*, *Implement T001 for `<slug>`*, or *continue the build, T002's PR is merged*.
 
-The skill defines the loop: **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel**; failures get **appended** feedback and another Coder pass; when both pass, results go to the human. Reviewer uses the task path; Verifier uses the task ID and `.ai-factory/config.md` only. Every scenario must map to tests; ordering follows the epic DAG.
+The skill creates an epic branch `factory/<slug>` from your base branch, then runs every **ready** task (all prerequisites `done`) at the same time, up to `max_concurrent_tasks`. Each task gets its own branch `factory/<slug>/T<id>` and git worktree, so parallel Coders never touch each other's files. Per task, the **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel** in that worktree; failures get **appended** feedback and another Coder pass. After `max_iterations` failed passes the task is set `blocked` with an escalation summary and handed to you, while other tasks keep going. When both pass, the skill pushes the task branch and opens a PR into the epic branch. Task files and reports stay in your main checkout as the single source of truth.
 
-**Quality gate: Approve the completed task.**
+**Quality gate: merge the task PR.** Merging is your sign-off: the task becomes `done`, its worktree is removed, and tasks that depended on it become ready and branch from the updated epic branch. Merge conflicts are reported to you, never resolved automatically, and nothing is ever pushed to your default branch.
 
 For low-level or custom orchestration you can invoke the `factory-coder`, `factory-reviewer`, and `factory-verifier` subagents directly (see [Supported tools](#-supported-tools)); prefer driving work through `factory-build` so gates and parallelism stay consistent.
 
 ### 📦 Stage 4: Ship
 
-After all tasks pass review and verification, the feature is ready for final human review and merge.
+When every task is `done`, the skill opens one PR from `factory/<slug>` into your base branch with a completion summary. **Quality gate: merge the epic PR.**
 
 ### 🗄️ Archiving a project
 
@@ -228,7 +226,7 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
       skills/                      # Core: packaged workflows, one per stage
         factory-design/SKILL.md    # Stage 1: Design Doc paths + Evaluator + quality gate
         factory-plan/SKILL.md      # Stage 2: Planner, epic + task DAG, quality gate
-        factory-build/SKILL.md     # Stage 3: Coder, parallel review/verify, per-task loop
+        factory-build/SKILL.md     # Stage 3: parallel tasks in worktrees, review/verify, PR per task
         factory-archive/           # Clean up a finished .ai-factory/projects slug
           SKILL.md
           reference.md
@@ -242,6 +240,8 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
     task.md
     review.md
     verify.md
+    ci/
+      factory-checks.yml           # GitHub Actions: runs config.md checks on every PR
   projects/                        # Work in progress (gitignored)
     <slug>/
       00-design.md
@@ -286,25 +286,25 @@ Both paths converge at the Evaluator. No Design Doc reaches the Planner without 
 ### Task Status Lifecycle
 
 ```
-draft → in-progress → implemented → done
-  │                       │    ↑
-  └──→ blocked            │    │
-                          │    │
-                     review/verify failed
-                     → feedback appended
-                     → Coder re-invoked
-                     → back to implemented
+draft → in-progress → implemented → in-review → done
+            │   ↑          │            │
+            │   │  review/verify failed │ you request changes
+            │   └── feedback appended ──┘ on the PR
+            │       Coder re-invoked
+            ▼
+         blocked  (Coder blocker, or max_iterations reached)
 ```
 
-- `draft` — Task created by Planner, awaiting implementation
-- `in-progress` — Coder is actively working on it
+- `draft` — Task created by Planner, waiting for its prerequisites to be `done`
+- `in-progress` — Its branch and worktree exist and the Coder is working on it
 - `implemented` — Coder finished, awaiting review + verification
-- `done` — Passed review + verification + human approval
-- `blocked` — Coder found a contradiction or impossible scenario
+- `in-review` — Review + verification passed; its PR into the epic branch is open
+- `done` — You merged its PR
+- `blocked` — Coder found a contradiction or impossible scenario, or the task hit `max_iterations`; the task file has an escalation summary
 
 ### The Coder-Reviewer-Verifier Loop
 
-The core quality enforcement mechanism is the parallel fork-join loop, the factory's inspection station:
+The core quality enforcement mechanism is the parallel fork-join loop, the factory's inspection station. Every running task has its own loop in its own worktree:
 
 ```
 Coder implements
@@ -315,8 +315,8 @@ Reviewer  Verifier    ← different concerns, different models
   │       │
   └───┬───┘          ← join: both must pass
       │
-  both pass ──▶ Human sign-off ──▶ Done
-  any fail  ──▶ feedback to Coder ──▶ loop
+  both pass ──▶ PR into epic branch ──▶ you merge ──▶ Done
+  any fail  ──▶ feedback to Coder ──▶ loop (max_iterations, then blocked)
 ```
 
 **Reviewer** checks the *semantic* quality:
@@ -349,8 +349,8 @@ Four mandatory human checkpoints in every run:
 
 1. **Design Doc Evaluation** — Review the Evaluator's critique and decide whether the Design Doc is ready for planning
 2. **Task Plan Approval** — Review the task decomposition for scope and ordering
-3. **Task Sign-off** — Review the review report + verification results before marking done
-4. **Final Merge** — Review the complete feature before merging
+3. **Task Sign-off** — Review the task PR (with the review report, verification results and CI) and merge it into the epic branch
+4. **Final Merge** — Review the epic PR with the complete feature and merge it into your base branch
 
 Use the `factory-design`, `factory-plan`, and `factory-build` skills so the orchestrator follows the stages, parallel review/verify, and these gates explicitly — skills replace a separate always-on workflow rule.
 
@@ -453,7 +453,11 @@ The `examples/oauth2/evaluations/00-design-evaluation.md` file demonstrates a fu
 
 ### `.ai-factory/config.md` — Project Configuration
 
-The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set.
+The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set. The `## Build` section sets `max_concurrent_tasks`, `max_iterations`, `worktree_dir` and `base_branch` for the build stage. If you installed `factory-checks.yml`, keep its commands in sync with this file.
+
+### `.ai-factory/templates/ci/factory-checks.yml` — CI check
+
+A GitHub Actions workflow template that runs the `config.md` Install, Test, Lint, Type check and Build commands on every pull request, so CI reproduces the Verifier's result on each task PR. The installer offers to copy it to `.github/workflows/` and fill it in.
 
 ### `.ai-factory/harnesses/<harness>/skills/` — Workflow (stages and gates)
 
@@ -463,6 +467,7 @@ The factory's procedure (paths, Evaluator, Planner, build loop, human quality ga
 
 - [Claude Code](https://claude.com/claude-code), [Cursor](https://cursor.com) with agent mode, or [OpenCode](https://opencode.ai)
 - A project with a configured test runner and linter
+- A git repository with a remote you can push to, and a way for the agent to open pull requests (for example the [`gh`](https://cli.github.com) CLI)
 - No other dependencies — this is pure configuration
 
 ## 🩺 Troubleshooting
