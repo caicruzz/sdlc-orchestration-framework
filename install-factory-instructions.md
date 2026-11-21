@@ -44,7 +44,8 @@ Ask the user which scope they want, and confirm the target paths before copying:
 ## 4. Follow the harness instructions
 
 Open the harness's `INSTALL.md` from the table above and follow it exactly. It
-lists the target paths for each scope and the verification step.
+lists the target paths for each scope, how to choose each agent's model, and
+the verification step.
 
 ## 5. Copy the shared project files
 

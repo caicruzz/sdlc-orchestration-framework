@@ -122,7 +122,7 @@ In your project, ask the agent in your harness (Claude Code, Cursor or OpenCode)
 Follow https://github.com/caicruzz/soloAIfactory/blob/main/install-factory-instructions.md to install Solo AI Factory.
 ```
 
-The agent identifies its harness, asks whether to install for this project or for your user, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It only ever touches `factory-*` agents and skills, and asks before overwriting any you customized; your other agents and skills are untouched. On a reinstall it lists templates that differ from the factory copy and offers to update them.
+The agent identifies its harness, asks whether to install for this project or for your user, lets you confirm or change each agent's model, copies that harness's `factory-*` agents and skills from `.ai-factory/harnesses/<harness>/`, and copies `config.md` and `templates/` into your project's `.ai-factory/` without overwriting anything. It only ever touches `factory-*` agents and skills, and asks before overwriting any you customized; your other agents and skills are untouched. On a reinstall it lists templates that differ from the factory copy and offers to update them.
 
 ### 2. Configure your project
 
@@ -365,12 +365,16 @@ soloAIfactory supports **Claude Code**, **Cursor** and **OpenCode**. Each harnes
 | Agents (user) | `~/.claude/agents/` | `~/.cursor/agents/` | `~/.config/opencode/agents/` |
 | Skills (user) | `~/.claude/skills/` | `~/.cursor/skills/` | `~/.config/opencode/skills/` |
 | Read-only agents | `tools: Read, Grep, Glob` allowlist; `+ Bash` for Reviewer and Verifier | `readonly: true` | `permissions` denying `edit`; Evaluator also denies `shell` |
-| Model | `model: inherit` | `model: inherit` | `model` omitted (inherits) |
+| Default models | Architect, Evaluator: `opus`; Planner, Coder, Reviewer: `sonnet`; Verifier: `haiku` | Architect, Evaluator, Planner: `grok-4.7`; Coder, Reviewer, Verifier: `composer-2.5` | none (`model` omitted, inherits the session's model) |
 | Invoking a subagent | Agent tool with `subagent_type: factory-coder` | Delegate by name, e.g. `/factory-coder <task path>` | `subagent` tool with `factory-coder` |
 
 Skills follow the [Agent Skills](https://agentskills.io) standard (`name` matching the folder, plus `description`). The only per-harness difference inside a skill is its `## Invoking subagents` section.
 
 Read-only agents (Evaluator, Reviewer, Verifier) never write files: they return their report and the orchestrating skill persists it. The Evaluator has no shell at all, so it is hard read-only. The Reviewer (`git diff`) and Verifier (test/lint/build commands) need a shell, which can still write files, so for them read-only also relies on the prompt.
+
+### Choosing models
+
+Each agent ships with a default model per harness (see the table above; the source of truth is the `model` line in each shipped agent file). The installer shows each agent's model and lets you keep or change it, then writes your choice into the installed agent's `model` line. To change one later, edit that line in the installed file, for example `.claude/agents/factory-verifier.md`. A reinstall keeps your current models unless you pick new ones. Each harness's `INSTALL.md` lists its accepted model formats.
 
 ### Keeping harness copies in sync
 
