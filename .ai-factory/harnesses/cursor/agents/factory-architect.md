@@ -30,7 +30,7 @@ You will receive one of:
 
 ## Output
 
-Write **`.ai-factory/projects/<slug>/00-design.md`** by **starting from** **`.ai-factory/templates/design.md`**
+Write **`.ai-factory/state/projects/<slug>/00-design.md`** by **starting from** **`.ai-factory/templates/design.md`**
 (fill every section defined there). The template’s sections imply the substance below:
 
 - **Problem Statement** — What problem we are solving and why

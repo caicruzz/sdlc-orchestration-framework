@@ -12,7 +12,7 @@ You are a planning agent responsible for breaking down a Design Doc into self-co
 ## Input
 
 You will receive the path to an approved Design Doc at
-`.ai-factory/projects/<slug>/00-design.md`.
+`.ai-factory/state/projects/<slug>/00-design.md`.
 
 ## Your Critical Responsibility
 
@@ -35,7 +35,7 @@ conventions).
 
 ## Output
 
-Write to `.ai-factory/projects/<slug>/`:
+Write to `.ai-factory/state/projects/<slug>/`:
 - `01-epic.md` — Overview of the full scope, following
   `.ai-factory/templates/epic.md` (task list + Mermaid dependency graph; see below)
 - `tasks/T001-<slug>.md` — One file per task, using the template at

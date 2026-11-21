@@ -24,17 +24,48 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 
 ## When to use
 
-- **`.ai-factory/projects/<slug>/01-epic.md`** and **`tasks/T<id>-*.md`** exist and the **task plan is human-approved**
+- **`.ai-factory/state/projects/<slug>/01-epic.md`** and **`tasks/T<id>-*.md`** exist and the **task plan is human-approved**
 - User says *build the epic*, *implement T001*, *run the CR loop*, *continue the build*, *resume the build*, *T002's PR is merged*
 
 ## Preconditions
 
-1. **`<slug>`** resolved — **`.ai-factory/projects/<slug>/`**
-2. **`01-epic.md`** and its **task dependency graph** define the order (`T001 --> T002` means T002 depends on T001)
-3. **`.ai-factory/config.md`** present, including its **`## Build`** settings (defaults below if a row is missing)
-4. The project is a **git** repository with a remote, and you can push and open pull requests (for example with the `gh` CLI). If you cannot open a PR, stop and tell the human; do not fall back to merging locally
-5. **`.ai-factory/projects/` is gitignored** (check with `git check-ignore -q .ai-factory/projects/<slug>/01-epic.md`). If it is tracked, every worktree would get its own stale copy of the task files and status writes would dirty the main checkout, so stop and offer to add `.ai-factory/projects/*` to `.gitignore` (and untrack it with `git rm -r --cached .ai-factory/projects` if needed) before building
-6. The working tree of the main checkout is clean, or the human agrees to proceed
+1. **Open the state** (see [State branch](#state-branch))
+2. **`<slug>`** resolved — **`.ai-factory/state/projects/<slug>/`**
+3. **`01-epic.md`** and its **task dependency graph** define the order (`T001 --> T002` means T002 depends on T001)
+4. **`.ai-factory/config.md`** present, including its **`## Build`** settings (defaults below if a row is missing)
+5. The project is a **git** repository with a remote, and you can push branches and open pull requests with whatever GitHub tool your harness gives you: the `gh` CLI, `gh api` (REST), or GitHub MCP tools. In Claude Code cloud sessions `gh pr create` fails, so use `gh api` or the MCP tools there. If you cannot open a PR, or a push of a `factory/*` branch or the state branch is refused (some cloud sessions allow pushes to one branch only unless the human says otherwise), stop and tell the human; do not fall back to merging locally
+6. **`.ai-factory/state/` is gitignored** in the main checkout (check with `git check-ignore -q .ai-factory/state/projects/<slug>/01-epic.md`). If it is tracked, every task worktree would get its own stale copy of the task files and status writes would dirty the main checkout, so stop and offer to add `.ai-factory/state/` to `.gitignore` (and untrack it with `git rm -r --cached .ai-factory/state` if needed) before building
+7. The working tree of the main checkout is clean, or the human agrees to proceed
+
+## State branch
+
+Everything the factory writes about a feature lives under **`.ai-factory/state/`**: work in progress in **`projects/<slug>/`** (Design Doc, evaluations, epic, task files, reports, **`build-state.md`**) and finished runs in **`archive/<slug>/<ts>/`**. That folder is a git worktree of the **state branch**, so it survives fresh clones, cloud sessions and other machines. **`config.md`** → **`## State`** → **`state_branch`** names the branch (default **`factory-state`**). If it is **`none`**, `.ai-factory/state/` is a plain folder and you skip the rest of this section: state stays on this machine only. The main checkout must gitignore **`.ai-factory/state/`**.
+
+**Open the state** before you read or write anything under `.ai-factory/state/`:
+
+1. If `.ai-factory/state/.git` exists, the worktree is already there. **Sync it**: run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>`. If the remote has no `<state_branch>` yet, run `git -C .ai-factory/state push -u origin <state_branch>` instead. Then stop here
+2. If `.ai-factory/state/` exists and is not empty, or the old folders `.ai-factory/projects/` or `.ai-factory/archive/` hold files, this is state from before the state branch. Ask the human before migrating it: move `.ai-factory/state/` (if present) to `.ai-factory/state.local-backup/`, run step 3, copy the old content into `.ai-factory/state/projects/` and `.ai-factory/state/archive/` (if a slug exists on both sides, ask which to keep), **save the state**, and tell the human which old folders they can delete
+3. Otherwise run `git fetch origin <state_branch>:refs/remotes/origin/<state_branch>` (the explicit refspec also works in single-branch clones, which cloud agents often use), then:
+   - If a local `<state_branch>` branch exists: `git worktree add .ai-factory/state <state_branch>`, then **sync it** as in step 1
+   - Else, if the fetch worked: `git worktree add .ai-factory/state -b <state_branch> origin/<state_branch>`
+   - Else, create the branch with no files, check it out and push it:
+
+     ```bash
+     empty_tree=$(git hash-object -t tree /dev/null)
+     git branch <state_branch> "$(git commit-tree "$empty_tree" -m 'factory: start state branch')"
+     git worktree add .ai-factory/state <state_branch>
+     git -C .ai-factory/state push -u origin <state_branch>
+     ```
+
+**Save the state** at each checkpoint this skill names:
+
+```bash
+git -C .ai-factory/state add -A
+git -C .ai-factory/state commit -m "factory(<slug>): <checkpoint>"   # skip when there is nothing to commit
+git -C .ai-factory/state push -u origin <state_branch>
+```
+
+If the push is rejected, run `git -C .ai-factory/state pull --rebase --autostash origin <state_branch>` and push again. If the rebase or the autostash conflicts, stop and ask the human. If you cannot push at all (no remote, or no permission), tell the human the state is saved only on this machine and carry on. **Never** force-push the state branch or merge it into another branch.
 
 ## Build settings (`config.md` → `## Build`)
 
@@ -56,9 +87,9 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 | Task worktree | `<worktree_dir>/<slug>-T<id>` |
 
 - **Never** commit to, push to, or merge into the **default branch** or **`base_branch`**. Only the final PR targets it, and the human merges it
-- **Task files, reports and `config.md` stay in the main checkout.** `.ai-factory/projects/` is the single source of truth for status and is not part of any worktree. Pass **absolute** main-checkout paths to subagents
+- **Task files and reports stay in `.ai-factory/state/` (the state worktree), and `config.md` stays in the main checkout; never use copies in a task worktree.** `.ai-factory/state/projects/` is the single source of truth for status. Pass **absolute** paths to subagents
 - Code changes happen **only** inside a task's worktree, committed to its task branch
-- **`build-state.md`** (see [Build state](#build-state)) lives with the task files in the main checkout
+- **`build-state.md`** (see [Build state](#build-state)) lives with the task files in the state worktree
 
 ## Context isolation (strict)
 
@@ -70,10 +101,10 @@ This skill does **not** replace **`.ai-factory/config.md`** for the Verifier or 
 
 ## Build state
 
-**`.ai-factory/projects/<slug>/build-state.md`** (shape: **`.ai-factory/templates/build-state.md`**) lets a fresh orchestrator pick up the build when this one runs low on context. Task files stay the source of truth for status, iterations, feedback and PR links. The state file holds only what they do not: tasks in flight and the step each is on, build-wide instructions the human gave in chat, what is waiting on the human, the next step, and the round count for this session.
+**`.ai-factory/state/projects/<slug>/build-state.md`** (shape: **`.ai-factory/templates/build-state.md`**) lets a fresh orchestrator pick up the build when this one runs low on context. Task files stay the source of truth for status, iterations, feedback and PR links. The state file holds only what they do not: tasks in flight and the step each is on, build-wide instructions the human gave in chat, what is waiting on the human, the next step, and the round count for this session.
 
 - You are its only writer. Keep it short: point to task files, never copy task text or reports into it
-- **Rewrite it at every checkpoint:** after Step 0, whenever a task enters a new step (A to E), after each Scheduler pass, whenever the human gives an instruction in chat, and at a handoff
+- **Rewrite it at every checkpoint:** after Step 0, whenever a task enters a new step (A to E), after each Scheduler pass, whenever the human gives an instruction in chat, and at a handoff. **Save the state** after every rewrite, so task files, reports and the state file reach the remote together
 - **Human instructions** given in chat: task-specific ones go in that task file as **`## Human Feedback`**; build-wide ones go under **Notes from the human**. Nothing the human said may live only in the conversation
 - **Rounds this session:** add one each time a task finishes Step C. It drives `handoff_after_rounds`
 - If the state file disagrees with a task file or with GitHub, the task file and GitHub win
@@ -84,7 +115,7 @@ If **`build-state.md`** exists with Status **`handoff-pending`** or **`active`**
 
 1. Resolve `base_branch` (setting, else the current branch). Tell the human which base you are using
 2. If `origin/factory/<slug>` does not exist, push the epic branch: reuse the local `factory/<slug>` if there is one, otherwise create it from `base_branch`, then `git push -u origin factory/<slug>`
-3. Otherwise fetch it: `git fetch origin factory/<slug>`. Step A always branches from `origin/factory/<slug>`
+3. Otherwise fetch it: `git fetch origin factory/<slug>:refs/remotes/origin/factory/<slug>` (the explicit refspec also works in single-branch clones, which cloud agents often use). Step A always branches from `origin/factory/<slug>`
 
 ## Scheduler
 
@@ -113,7 +144,7 @@ Use when **`build-state.md`** exists with Status **`handoff-pending`** (an earli
    | Task status | Resume at |
    |---|---|
    | `draft` | The Scheduler, as usual |
-   | `in-progress` | **Step B**. If the state file says the Coder had not returned (the session ended inside Step B), do not increment **Iteration** again; the Coder picks up any uncommitted work in the worktree |
+   | `in-progress` | **Step B**. If the state file says the Coder had not returned (the session ended inside Step B), do not increment **Iteration** again; the Coder picks up any uncommitted work in the worktree. If the worktree is gone (a fresh clone, for example a new cloud session), Step A recreates it from the pushed task branch, and uncommitted work from the old session is lost |
    | `implemented` | **Step C**, or **Step D** if the task file's **`## Review & Verification`** already holds both reports for the current iteration |
    | `in-review` | Scheduler step 1 (check the PR) |
    | `blocked` | Nothing. Remind the human it is waiting on them |
@@ -141,13 +172,14 @@ Your context fills as subagent reports come back. Hand off to a fresh orchestrat
 3. Rewrite **`build-state.md`** with Status **`handoff-pending`**, each task in flight with the step it resumes at, and a **Next step**
 4. Tell the human, then stop. Use this message, filling in the path and slug:
 
-   > My context is getting full, so I saved the build state to `<path to build-state.md>`. To continue with a fresh orchestrator, clear this conversation and then say **resume the factory build for `<slug>`**.
+   > My context is getting full, so I saved the build state to `<path to build-state.md>` and pushed it to the state branch. To continue with a fresh orchestrator, clear this conversation (or start a new session on this repository) and then say **resume the factory build for `<slug>`**.
    >
    > | Harness | Clear with |
    > |---|---|
    > | Claude Code | `/clear` |
    > | Cursor | Start a new chat |
    > | OpenCode | `/new` |
+   > | Cloud agents with no clear command (for example Claude project threads or Cursor cloud agents) | Start a new session or thread on the same repository |
 
 Do no more build work after handing off; the next orchestrator owns the build.
 
@@ -155,8 +187,8 @@ Do no more build work after handing off; the next orchestrator owns the build.
 
 ### Step A — Create the task's branch and worktree
 
-1. `git fetch origin factory/<slug>` so dependents start from the latest merged prerequisites
-2. `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>`. If the branch or worktree already exists (resumed build), reuse it
+1. `git fetch origin factory/<slug>:refs/remotes/origin/factory/<slug>` so dependents start from the latest merged prerequisites
+2. `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>`. If the worktree already exists (resumed build), reuse it. If only the branch exists, locally or on the remote (a resumed build on a fresh clone), add the worktree on that branch instead. For a local branch, run `git worktree add <worktree_dir>/<slug>-T<id> factory/<slug>/T<id>`. For a remote-only branch, run `git fetch origin factory/<slug>/T<id>:refs/remotes/origin/factory/<slug>/T<id>`, then `git worktree add <worktree_dir>/<slug>-T<id> -b factory/<slug>/T<id> origin/factory/<slug>/T<id>`
 3. If `config.md` has an **Install** command, run it inside the worktree
 4. In the task file, fill **`## Delivery`** (branch, worktree, iteration `0 / <max_iterations>`) and set status to **`in-progress`**
 
@@ -165,7 +197,8 @@ Do no more build work after handing off; the next orchestrator owns the build.
 1. Increment the task file's **Iteration** count
 2. **Invoke the `factory-coder` subagent** with the task file path, the `config.md` path, the worktree path and the epic branch
 3. The Coder works and commits only in the worktree, and sets status to **`implemented`** (or **`blocked`**, which stops this task's loop; report it to the human)
-4. **Coder autonomy:** implementation choices and optional Reviewer nits stay with the Coder. **Every** Gherkin scenario **must** pass
+4. Push the task branch (`git push -u origin factory/<slug>/T<id>`) so the Coder's commits survive the session ending
+5. **Coder autonomy:** implementation choices and optional Reviewer nits stay with the Coder. **Every** Gherkin scenario **must** pass
 
 ### Step C — Review and Verify (**parallel** — do not sequentialize)
 
@@ -178,8 +211,8 @@ Do no more build work after handing off; the next orchestrator owns the build.
 
 **Persist both reports.** Reviewer and Verifier are **read-only** and return their reports as text. After both return:
 
-1. Write the Reviewer report to **`.ai-factory/projects/<slug>/reviews/T<id>-review.md`** (shape: **`.ai-factory/templates/review.md`**)
-2. Write the Verifier report to **`.ai-factory/projects/<slug>/verifications/T<id>-verify.md`** (shape: **`.ai-factory/templates/verify.md`**)
+1. Write the Reviewer report to **`.ai-factory/state/projects/<slug>/reviews/T<id>-review.md`** (shape: **`.ai-factory/templates/review.md`**)
+2. Write the Verifier report to **`.ai-factory/state/projects/<slug>/verifications/T<id>-verify.md`** (shape: **`.ai-factory/templates/verify.md`**)
 3. Update the task file's **`## Review & Verification`** section: status, a one-line key-findings summary, and the report paths
 
 The orchestrator is the only writer of these files, so parallel tasks never race on them.
@@ -211,12 +244,12 @@ If the human requests changes on the PR, append their comments to the task file 
 ### Step E — PR merged (task done)
 
 1. Set the task status to **`done`**
-2. `git worktree remove <worktree_dir>/<slug>-T<id>` and delete the local task branch
+2. If they exist, `git worktree remove <worktree_dir>/<slug>-T<id>` and delete the local task branch
 3. Return to the **Scheduler**: dependents may now be ready
 
 ## All tasks done (Stage 4: Ship)
 
-When every task is **`done`**, open one PR from **`factory/<slug>`** into **`base_branch`** with a completion summary (tasks, PR links, notable findings), and set **`build-state.md`** Status to **`complete`**. **Merging it is Quality Gate 4 (final merge)** — the human does it. Optionally use **`factory-archive`** once the feature is retired.
+When every task is **`done`**, open one PR from **`factory/<slug>`** into **`base_branch`** with a completion summary (tasks, PR links, notable findings), and set **`build-state.md`** Status to **`complete`** (then **save the state**). **Merging it is Quality Gate 4 (final merge)** — the human does it. Optionally use **`factory-archive`** once the feature is retired.
 
 ## What you must not do in Stage 3
 
@@ -243,11 +276,11 @@ Pass **only** the inputs this skill names (paths, task IDs, branch) — subagent
 Example inputs:
 
 ```text
-factory-coder     Implement /abs/repo/.ai-factory/projects/<slug>/tasks/T001-<name>.md
+factory-coder     Implement /abs/repo/.ai-factory/state/projects/<slug>/tasks/T001-<name>.md
                   config: /abs/repo/.ai-factory/config.md
                   worktree: /abs/repo-worktrees/<slug>-T001
                   epic branch: factory/<slug>
-factory-reviewer  Review /abs/repo/.ai-factory/projects/<slug>/tasks/T001-<name>.md
+factory-reviewer  Review /abs/repo/.ai-factory/state/projects/<slug>/tasks/T001-<name>.md
                   worktree: /abs/repo-worktrees/<slug>-T001
                   epic branch: factory/<slug>
 factory-verifier  Verify T001
@@ -259,12 +292,12 @@ factory-verifier  Verify T001
 
 | Item | Value |
 |------|--------|
-| Task files | `.ai-factory/projects/<slug>/tasks/T<id>-*.md` (main checkout) |
+| Task files | `.ai-factory/state/projects/<slug>/tasks/T<id>-*.md` (state worktree) |
 | Order | **`01-epic.md`** task dependency graph; a task is ready when all prerequisites are `done` |
 | Statuses | `draft` → `in-progress` → `implemented` → `in-review` → `done`; `blocked` on Coder blocker or retry cap |
 | Parallel step | **`factory-reviewer`** + **`factory-verifier`** per iteration; tasks themselves run concurrently |
 | Task sign-off | Human merges the task PR into `factory/<slug>` |
-| Build state | `.ai-factory/projects/<slug>/build-state.md`, rewritten at every checkpoint; read by **Resume** |
+| Build state | `.ai-factory/state/projects/<slug>/build-state.md`, rewritten at every checkpoint; read by **Resume** |
 | Final merge | Human merges `factory/<slug>` into `base_branch` |
 
 **Previous stage:** approved plan (**`factory-plan`**).

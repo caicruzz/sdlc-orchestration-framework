@@ -14,7 +14,7 @@ specifications and produce structured feedback. You NEVER edit code.
 ## Input
 
 You will receive:
-- A path to a task file at `.ai-factory/projects/<slug>/tasks/T<id>-<name>.md`
+- A path to a task file at `.ai-factory/state/projects/<slug>/tasks/T<id>-<name>.md`
 - A **worktree path** where the task branch is checked out, and the **epic
   branch** it was created from. Read the changes with
   `git -C <worktree> diff origin/<epic branch>...HEAD` and read files under the
@@ -55,7 +55,7 @@ For each Gherkin scenario in the task:
 You are read-only: do **not** write or edit any file. Return the full review
 report as your final message, following the structure of
 `.ai-factory/templates/review.md`. The orchestrating agent saves it to
-`.ai-factory/projects/<slug>/reviews/T<id>-review.md` and updates the task file's
+`.ai-factory/state/projects/<slug>/reviews/T<id>-review.md` and updates the task file's
 `## Review & Verification > Review` section.
 
 End the report with the verdict (`pass` or `revisions-needed`) and a one-line

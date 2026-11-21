@@ -25,6 +25,7 @@ import json
 import os
 import re
 import sys
+import tempfile
 
 DEFAULT_PERCENT = 70
 SECOND_WARNING = 90
@@ -45,7 +46,7 @@ def find_root(start):
 
 
 def build_states(root):
-    projects = os.path.join(root, ".ai-factory", "projects")
+    projects = os.path.join(root, ".ai-factory", "state", "projects")
     states = []
     try:
         slugs = sorted(os.listdir(projects))
@@ -118,14 +119,15 @@ def window_arg(argv):
     return None
 
 
-def marker_path(root, session_id):
-    """Warn-level marker, kept in the gitignored projects folder of this repo."""
+def marker_path(session_id):
+    """Warn-level marker for this session, kept in the temp folder so it never
+    lands on the state branch."""
     safe = re.sub(r"[^A-Za-z0-9_-]", "", session_id) or "unknown"
-    return os.path.join(root, ".ai-factory", "projects", ".context-warnings", safe)
+    return os.path.join(tempfile.gettempdir(), "factory-context-warnings", safe)
 
 
-def warned_level(root, session_id):
-    path = marker_path(root, session_id)
+def warned_level(session_id):
+    path = marker_path(session_id)
     try:
         with open(path, encoding="utf-8") as handle:
             return path, int(handle.read().strip() or 0)
@@ -152,7 +154,7 @@ def post_tool_use(data, root, states):
     if percent < threshold:
         return
     level = SECOND_WARNING if percent >= SECOND_WARNING else int(threshold)
-    marker, previous = warned_level(root, data.get("session_id") or "unknown")
+    marker, previous = warned_level(data.get("session_id") or "unknown")
     if previous >= level:
         return
     try:
@@ -175,7 +177,7 @@ def session_start(data, root, states):
     if source in ("compact", "clear"):
         # Usage starts low again, so the next crossing should warn again.
         try:
-            os.remove(marker_path(root, data.get("session_id") or "unknown"))
+            os.remove(marker_path(data.get("session_id") or "unknown"))
         except OSError:
             pass
     if source == "compact":

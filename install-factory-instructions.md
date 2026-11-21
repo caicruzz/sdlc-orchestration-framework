@@ -41,6 +41,14 @@ Ask the user which scope they want, and confirm the target paths before copying:
   machine gets the agents and skills. Each project still needs the shared files
   from step 5.
 
+If the user wants to run the factory in cloud agents (Claude Code on the web or
+in Claude projects, Cursor cloud agents, and similar), recommend **project**
+scope and tell them to commit the installed agents, skills, hooks settings and
+`.ai-factory/` files to the repository. Cloud sessions start from a fresh clone,
+so they see only what is committed: user-scope files on this machine never
+reach them, and Claude Code cloud sessions do not install plugins a repository
+enables.
+
 ## 4. Follow the harness instructions
 
 Open the harness's `INSTALL.md` from the table above and follow it exactly. It
@@ -55,16 +63,25 @@ copy without overwriting anything that already exists:
 - `<factory>/.ai-factory/config.md` to `.ai-factory/config.md`
 - `<factory>/.ai-factory/templates/` to `.ai-factory/templates/`
 
-Then create `.ai-factory/projects/` and `.ai-factory/archive/` if they are
-missing. Offer (do not force) to add these lines to the project's `.gitignore`.
-Tell the user that the build stage requires `.ai-factory/projects/` to be
-ignored, because task files must not be copied into task worktrees, and that
-`factory-build` stops and asks if it is not:
+Do not create `.ai-factory/state/`: the factory skills create it on first use
+as a git worktree of the state branch (`config.md` → `## State` →
+`state_branch`, default `factory-state`), which needs the folder to be missing
+or empty. If an existing `config.md` has no `## State` section, the skills use
+the default; tell the user they can add the section from
+`<factory>/.ai-factory/config.md` to change it.
+
+Offer (do not force) to add this line to the project's `.gitignore`. Tell the
+user that the factory requires it, because the state worktree must not be part
+of the main checkout or of task worktrees, and that `factory-build` stops and
+asks if it is missing:
 
 ```gitignore
-.ai-factory/projects/*
-.ai-factory/archive/*
+.ai-factory/state/
 ```
+
+If the project has the old folders `.ai-factory/projects/` or
+`.ai-factory/archive/` with files in them, tell the user that the next factory
+skill they run will offer to move that content onto the state branch.
 
 ## 6. Offer the CI workflow
 

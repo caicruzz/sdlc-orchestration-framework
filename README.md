@@ -70,9 +70,9 @@ Path A: No Design Doc yet         Path B: Design Doc already exists
 
 | Station       | Role                                                                    | Reads                               | Writes                                                                         | Model   | Readonly |
 | ------------- | ----------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------ | ------- | -------- |
-| **Architect** | Produces the Design Doc from requirements                               | Requirements + codebase exploration | Design Doc at `.ai-factory/projects/<slug>/00-design.md`                       | inherit | no       |
+| **Architect** | Produces the Design Doc from requirements                               | Requirements + codebase exploration | Design Doc at `.ai-factory/state/projects/<slug>/00-design.md`                       | inherit | no       |
 | **Evaluator** | Critically evaluates Design Docs — finds flaws, blind spots, trade-offs | Design Doc + codebase exploration   | Returns critique as text (main agent persists)                                 | inherit | yes      |
-| **Planner**   | Decomposes the Design Doc into self-contained Gherkin-based tasks       | Design Doc only                     | Epic at `01-epic.md` + tasks at `.ai-factory/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
+| **Planner**   | Decomposes the Design Doc into self-contained Gherkin-based tasks       | Design Doc only                     | Epic at `01-epic.md` + tasks at `.ai-factory/state/projects/<slug>/tasks/T<id>-*.md` | inherit | no       |
 | **Coder**     | Implements task + writes tests from Gherkin scenarios                   | Task file + config (+ full repo in its worktree) | Production code + tests, committed on the task branch                 | inherit | no       |
 | **Reviewer**  | Reviews code quality, bugs, scenario coverage                           | ONE task + code diff                | Returns review report (main agent persists)                                    | inherit | yes      |
 | **Verifier**  | Runs tests, lint, typecheck, build mechanically                         | Config + task worktree              | Returns verification report (main agent persists)                              | inherit | yes      |
@@ -144,7 +144,7 @@ Edit `.ai-factory/config.md` to match your tech stack:
 
 ### 3. Start a feature
 
-Use the [`factory-design`](.ai-factory/harnesses/claude/skills/factory-design/SKILL.md) skill in natural language (Claude Code, Cursor or OpenCode), for example: *Run the design stage for OAuth2 with Google and GitHub*, or *Evaluate the Design Doc at `.ai-factory/projects/oauth2/00-design.md`*. The skill covers the Architect (when needed), the mandatory Evaluator, persisting `.ai-factory/projects/<slug>/evaluations/00-design-evaluation.md`, and the human quality gate; it documents when the subagents are invoked.
+Use the [`factory-design`](.ai-factory/harnesses/claude/skills/factory-design/SKILL.md) skill in natural language (Claude Code, Cursor or OpenCode), for example: *Run the design stage for OAuth2 with Google and GitHub*, or *Evaluate the Design Doc at `.ai-factory/state/projects/oauth2/00-design.md`*. The skill covers the Architect (when needed), the mandatory Evaluator, persisting `.ai-factory/state/projects/<slug>/evaluations/00-design-evaluation.md`, and the human quality gate; it documents when the subagents are invoked.
 
 ## 🔄 Workflow
 
@@ -156,15 +156,15 @@ Follow [`factory-design`](.ai-factory/harnesses/claude/skills/factory-design/SKI
 
 #### Path A: Generate the Design Doc
 
-The skill has the **Architect** explore the codebase and write `.ai-factory/projects/<slug>/00-design.md` from your feature description or requirements.
+The skill has the **Architect** explore the codebase and write `.ai-factory/state/projects/<slug>/00-design.md` from your feature description or requirements.
 
 #### Path B: Bring your own Design Doc
 
-Place your existing Design Doc at `.ai-factory/projects/<slug>/00-design.md`, then continue with the same skill (skip regeneration unless you explicitly want a refresh).
+Place your existing Design Doc at `.ai-factory/state/projects/<slug>/00-design.md`, then continue with the same skill (skip regeneration unless you explicitly want a refresh).
 
 #### Both paths: Evaluate
 
-The skill runs the **Evaluator** on `.ai-factory/projects/<slug>/00-design.md`. It critically examines the Design Doc, validates claims against the codebase, and returns a structured critique. If the verdict is `needs-revision`, the human revises the Design Doc and evaluation runs again per the skill.
+The skill runs the **Evaluator** on `.ai-factory/state/projects/<slug>/00-design.md`. It critically examines the Design Doc, validates claims against the codebase, and returns a structured critique. If the verdict is `needs-revision`, the human revises the Design Doc and evaluation runs again per the skill.
 
 **Quality gate: Review the evaluation and approve the Design Doc.**
 
@@ -172,7 +172,7 @@ The skill stops before Stage 2 until the human approves.
 
 ### 🗺️ Stage 2: Plan
 
-Follow [`factory-plan`](.ai-factory/harnesses/claude/skills/factory-plan/SKILL.md) after the Design Doc is human-approved. The skill uses the **Planner** to read `.ai-factory/projects/<slug>/00-design.md` and produce self-contained tasks with Gherkin scenarios under `.ai-factory/projects/<slug>/tasks/`, plus `01-epic.md` with a Mermaid task dependency graph (following `.ai-factory/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
+Follow [`factory-plan`](.ai-factory/harnesses/claude/skills/factory-plan/SKILL.md) after the Design Doc is human-approved. The skill uses the **Planner** to read `.ai-factory/state/projects/<slug>/00-design.md` and produce self-contained tasks with Gherkin scenarios under `.ai-factory/state/projects/<slug>/tasks/`, plus `01-epic.md` with a Mermaid task dependency graph (following `.ai-factory/templates/epic.md`). When the plan has parallel dependency streams, the diagram **color-codes** each stream and includes a short **legend**; linear plans use a single node style.
 
 **Quality gate: Review and approve the task plan.**
 
@@ -182,11 +182,11 @@ The skill requires `## Task dependency graph` in `01-epic.md` and stops at human
 
 Follow [`factory-build`](.ai-factory/harnesses/claude/skills/factory-build/SKILL.md), for example: *Build the epic for `<slug>`*, *Implement T001 for `<slug>`*, or *continue the build, T002's PR is merged*.
 
-The skill creates an epic branch `factory/<slug>` from your base branch, then runs every **ready** task (all prerequisites `done`) at the same time, up to `max_concurrent_tasks`. Each task gets its own branch `factory/<slug>/T<id>` and git worktree, so parallel Coders never touch each other's files. Per task, the **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel** in that worktree; failures get **appended** feedback and another Coder pass. After `max_iterations` failed passes the task is set `blocked` with an escalation summary and handed to you, while other tasks keep going. When both pass, the skill pushes the task branch and opens a PR into the epic branch. Task files and reports stay in your main checkout as the single source of truth.
+The skill creates an epic branch `factory/<slug>` from your base branch, then runs every **ready** task (all prerequisites `done`) at the same time, up to `max_concurrent_tasks`. Each task gets its own branch `factory/<slug>/T<id>` and git worktree, so parallel Coders never touch each other's files. Per task, the **Coder** implements from the task file and Gherkin; **Reviewer** and **Verifier** run **in parallel** in that worktree; failures get **appended** feedback and another Coder pass. After `max_iterations` failed passes the task is set `blocked` with an escalation summary and handed to you, while other tasks keep going. The task branch is pushed after every Coder pass, and when both checks pass the skill opens a PR into the epic branch. Task files and reports live on the state branch (see Factory state below) as the single source of truth.
 
 **Quality gate: merge the task PR.** Merging is your sign-off: the task becomes `done`, its worktree is removed, and tasks that depended on it become ready and branch from the updated epic branch. Merge conflicts are reported to you, never resolved automatically, and nothing is ever pushed to your default branch.
 
-**Long builds and context.** The orchestrator saves `.ai-factory/projects/<slug>/build-state.md` at every checkpoint. After `handoff_after_rounds` Review + Verify rounds, or when you ask, it finishes the steps in flight, marks the state `handoff-pending` and asks you to clear the conversation (`/clear` in Claude Code, a new chat in Cursor, `/new` in OpenCode) and say *resume the factory build for `<slug>`*. The fresh orchestrator rebuilds its picture from the state file and task files and carries on. The installer also offers optional context hooks that measure real usage: Claude Code (Python hook reading the session's token usage after each tool call) and OpenCode V2 (plugin using the same figure OpenCode compacts on) warn the orchestrator at `handoff_at_percent` and re-point it to the state file after a compaction; Cursor only reports usage when it compacts, so its hook shows you a message then. All three tell a fresh session that a handoff is pending.
+**Long builds and context.** The orchestrator saves `.ai-factory/state/projects/<slug>/build-state.md` at every checkpoint. After `handoff_after_rounds` Review + Verify rounds, or when you ask, it finishes the steps in flight, marks the state `handoff-pending` and asks you to clear the conversation (`/clear` in Claude Code, a new chat in Cursor, `/new` in OpenCode, or a new session or thread in cloud agents that have no clear command) and say *resume the factory build for `<slug>`*. The fresh orchestrator rebuilds its picture from the state file and task files and carries on. The installer also offers optional context hooks that measure real usage: Claude Code (Python hook reading the session's token usage after each tool call) and OpenCode V2 (plugin using the same figure OpenCode compacts on) warn the orchestrator at `handoff_at_percent` and re-point it to the state file after a compaction; Cursor only reports usage when it compacts, so its hook shows you a message then. All three tell a fresh session that a handoff is pending.
 
 For low-level or custom orchestration you can invoke the `factory-coder`, `factory-reviewer`, and `factory-verifier` subagents directly (see [Supported tools](#-supported-tools)); prefer driving work through `factory-build` so gates and parallelism stay consistent.
 
@@ -198,18 +198,31 @@ When every task is `done`, the skill opens one PR from `factory/<slug>` into you
 
 When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/claude/skills/factory-archive/SKILL.md) skill; more detail in [`reference.md`](.ai-factory/harnesses/claude/skills/factory-archive/reference.md).
 
-**How to use it.** In your harness, ask the agent in plain language, for example: *Archive project `my-feature`*, *archive `oauth2`*, or *clean up the factory project for that slug*. The agent follows the skill: it confirms the slug, that the **Design Doc will move** into the archive, and that the `projects/<slug>` tree will be removed.
+**How to use it.** In your harness, ask the agent in plain language, for example: *Archive project `my-feature`*, *archive `oauth2`*, or *clean up the factory project for that slug*. The agent follows the skill: it confirms the slug, checks that the build is finished (all tasks `done`, epic PR merged) and asks if it is not, confirms that the **Design Doc will move** into the archive and that the `projects/<slug>` tree will be removed, saves the result to the state branch, and offers to remove the build's leftover worktrees and `factory/<slug>` branches.
 
 **What you get.** One self-contained run folder, **no duplicate `project-summary`**, and the slug directory under `projects/` is removed (you can start a new feature with the same slug later if needed).
 
 | Location                                | After a successful archive                                                                                                                                                                                                                   |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.ai-factory/archive/<slug>/<timestamp>/` | `00-design.md` — moved from `projects/` (not edited), `project-summary.md` — single summary (epic, evaluation highlights, one section per task with review/verify), `dependency-graph.md` — full Mermaid + legend from `01-epic` when available |
-| `.ai-factory/projects/<slug>/`            | **Removed** (empty after the move and cleanup)                                                                                                                                                                                               |
+| `.ai-factory/state/archive/<slug>/<timestamp>/` | `00-design.md` — moved from `projects/` (not edited), `project-summary.md` — single summary (delivery and PR links, epic, evaluation highlights, one section per task with PR, iterations and review/verify, and the state branch commit that still holds the removed files), `dependency-graph.md` — full Mermaid + legend from `01-epic` when available |
+| `.ai-factory/state/projects/<slug>/`            | **Removed** (still readable in the state branch history)                                                                                                                                                                                             |
 
 **What stays** elsewhere: all of `.ai-factory/` except that slug (config, templates, other slugs' folders). The factory's `.ai-factory/templates/` is never deleted.
 
-**Git.** In this repository, `.ai-factory/projects/*` and `.ai-factory/archive/*` are **gitignored** (with `.gitkeep` placeholders) so local factory and archive output stay off the default commit unless you opt in.
+**Git.** The archive lives on the state branch with everything else in `.ai-factory/state/`, so it never touches your default branch.
+
+### 🗂️ Factory state
+
+Everything the factory writes about a feature (Design Docs, evaluations, epics, task files, reports, `build-state.md` and archives) lives in `.ai-factory/state/`. That folder is a git worktree of a dedicated **state branch** (`factory-state` by default, set by `state_branch` in `config.md` → `## State`). The skills create it on first use, commit at every checkpoint and push it, so the state survives fresh clones, cloud sessions and switching machines. The branch holds no code and is never merged. `.ai-factory/state/` must be gitignored in your main checkout; the installer offers the line. Set `state_branch` to `none` to keep the folder local only.
+
+### ☁️ Cloud agents
+
+The factory runs in cloud agents such as Claude Code on the web and Claude projects, and Cursor cloud agents. Two things make that work:
+
+- **Commit a project-scope install.** Cloud sessions start from a fresh clone, so they see only what is in the repository. User-scope installs on your machine don't reach them, and Claude Code cloud sessions don't install plugins that a repository enables. The installer recommends project scope when you plan to use cloud agents.
+- **State on the state branch.** A new session picks up the design, plan and build from `factory-state`, so *resume the factory build for `<slug>`* works in a fresh session.
+
+Things to know: in Claude Code cloud sessions `gh pr create` doesn't work, so the build opens PRs with `gh api` or GitHub MCP tools. Cloud sessions may only allow pushes to one branch unless you say otherwise, so tell the agent it may push `factory/*` and the state branch. Cursor's cloud agent docs say repository hooks run there, but reports of hook bugs suggest you shouldn't depend on the context hooks in Cursor cloud.
 
 ## 📁 Project Structure
 
@@ -229,7 +242,7 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
         factory-design/SKILL.md    # Stage 1: Design Doc paths + Evaluator + quality gate
         factory-plan/SKILL.md      # Stage 2: Planner, epic + task DAG, quality gate
         factory-build/SKILL.md     # Stage 3: parallel tasks in worktrees, review/verify, PR per task
-        factory-archive/           # Clean up a finished .ai-factory/projects slug
+        factory-archive/           # Clean up a finished .ai-factory/state/projects slug
           SKILL.md
           reference.md
       hooks/factory_context.py     # Optional context handoff hooks (Claude Code; also in cursor/)
@@ -247,25 +260,26 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
     build-state.md                 # factory-build handoff state
     ci/
       factory-checks.yml           # GitHub Actions: runs config.md checks on every PR
-  projects/                        # Work in progress (gitignored)
-    <slug>/
-      00-design.md
-      evaluations/
-        00-design-evaluation.md    # Evaluator report (persisted by main agent)
-      01-epic.md
-      build-state.md               # Orchestrator state for resume / handoff
-      tasks/
-        T001-<slug>.md
-      reviews/
-        T001-review.md             # Reviewer report (persisted by main agent)
-      verifications/
-        T001-verify.md             # Verifier report (persisted by main agent)
-  archive/                         # Self-contained archive runs (gitignored)
-    <slug>/
-      <timestamp>/
-        00-design.md               # Moved from projects/<slug>/
-        dependency-graph.md        # Mermaid + legend (from 01-epic)
-        project-summary.md         # Single summary; links to ./00-design and ./dependency-graph
+  state/                           # Worktree of the factory-state branch (gitignored)
+    projects/                      # Work in progress
+      <slug>/
+        00-design.md
+        evaluations/
+          00-design-evaluation.md  # Evaluator report (persisted by main agent)
+        01-epic.md
+        build-state.md             # Orchestrator state for resume / handoff
+        tasks/
+          T001-<slug>.md
+        reviews/
+          T001-review.md           # Reviewer report (persisted by main agent)
+        verifications/
+          T001-verify.md           # Verifier report (persisted by main agent)
+    archive/                       # Self-contained archive runs
+      <slug>/
+        <timestamp>/
+          00-design.md             # Moved from projects/<slug>/
+          dependency-graph.md      # Mermaid + legend (from 01-epic)
+          project-summary.md       # Single summary; links to ./00-design and ./dependency-graph
   examples/                        # Example artifacts for reference
     oauth2/
       00-design.md
@@ -395,6 +409,7 @@ Agent prompts and skill content are duplicated across harness folders on purpose
 
 - **Project-level** (default): the agents and skills live in the repo's harness folder (e.g. `.claude/`). Commit them so everyone gets the same setup.
 - **User-level**: installed under your home directory, so every repo on the machine gets them. Each project still needs `.ai-factory/config.md` and `.ai-factory/templates/`, which the installer copies.
+- **Cloud agents** see only what is committed, so use project-level and commit it (see Cloud agents under Workflow).
 
 Cursor also reads `.claude/agents/` and `.claude/skills/`, and OpenCode also reads `.claude/skills/`. If you install more than one harness in the same repo, each harness's own folder wins for agents; Cursor may list duplicate skills.
 
@@ -478,7 +493,7 @@ The factory's procedure (paths, Evaluator, Planner, build loop, human quality ga
 
 ## 🩺 Troubleshooting
 
-For a clean reinstall, ask your agent to follow [`install-factory-instructions.md`](install-factory-instructions.md) again. It replaces only `factory-*` agents and skills (asking first about any you changed), leaves your own agents and skills alone, never overwrites `.ai-factory/config.md` or `.ai-factory/projects/`, and offers to update templates that differ from the factory copy.
+For a clean reinstall, ask your agent to follow [`install-factory-instructions.md`](install-factory-instructions.md) again. It replaces only `factory-*` agents and skills (asking first about any you changed), leaves your own agents and skills alone, never overwrites `.ai-factory/config.md` or `.ai-factory/state/projects/`, and offers to update templates that differ from the factory copy.
 
 If the agents or skills don't show up after installing, restart the harness; most only scan their folders at startup.
 

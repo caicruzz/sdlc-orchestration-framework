@@ -15,7 +15,7 @@ requirements source; the task file is the contract.
 ## Input
 
 You will receive:
-- A path to a task file at `.ai-factory/projects/<slug>/tasks/T<id>-<name>.md`
+- A path to a task file at `.ai-factory/state/projects/<slug>/tasks/T<id>-<name>.md`
 - A path to `.ai-factory/config.md` for project conventions
 - A **worktree path**: a git worktree with the task branch
   (`factory/<slug>/T<id>`) checked out, where all code changes happen
