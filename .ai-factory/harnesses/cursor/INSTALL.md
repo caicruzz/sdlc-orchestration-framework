@@ -36,6 +36,33 @@ to the target project root, or to `~` for user scope.
    line of each installed agent to the chosen value (see [Models](#models)).
    Change nothing else in the copied files; their frontmatter is otherwise
    already in the format Cursor expects.
+5. **Offer the context hooks.** Explain that `factory-build` can hand off to
+   a fresh orchestrator before its context fills. Cursor reports context usage
+   only when it compacts, so the hooks show the user a message at compaction
+   during an active build, and tell a new chat that a handoff is pending. They
+   need `python3` on `PATH`. Ask whether to install them. If yes:
+   - Copy `<factory>/.ai-factory/harnesses/cursor/hooks/factory_context.py` to
+     `.cursor/hooks/` (project) or `~/.cursor/hooks/` (user). If a different
+     file is already there, ask before overwriting.
+   - Merge these entries into `.cursor/hooks.json` (project) or
+     `~/.cursor/hooks.json` (user), creating the file with `"version": 1` if it
+     is missing. Keep every existing hook, and skip an entry whose command
+     already runs `factory_context.py`. Project hooks run from the project
+     root; for user scope, use `python3 hooks/factory_context.py` (user hooks
+     run from `~/.cursor/`).
+
+     ```json
+     {
+       "version": 1,
+       "hooks": {
+         "preCompact": [{ "command": "python3 .cursor/hooks/factory_context.py" }],
+         "sessionStart": [{ "command": "python3 .cursor/hooks/factory_context.py" }]
+       }
+     }
+     ```
+
+   Without the hooks, handoff still works from the `handoff_after_rounds`
+   count.
 
 ## Notes
 
@@ -43,6 +70,10 @@ to the target project root, or to `~` for user scope.
   version is installed in the same project, Cursor uses the `.cursor/` agent
   when names collide (documented), but may list duplicate skills. Tell the user
   if both are present.
+- Cursor also runs Claude Code hooks from `.claude/settings.json`. If the
+  Claude Code context hooks are installed in the same project, a new Cursor
+  chat can get the pending-handoff note twice. Tell the user if both are
+  present.
 
 ## Models
 
@@ -57,4 +88,4 @@ reinstall keeps the current value unless the user picks another one.
 
 ## Verify
 
-Confirm the six `factory-*` agents appear under Settings > Subagents and the four `factory-*` skills appear in the `/` menu. Restart Cursor if they do not show up.
+Confirm the six `factory-*` agents appear under Settings > Subagents and the four `factory-*` skills appear in the `/` menu. Restart Cursor if they do not show up. If you installed the context hooks, confirm they appear in Cursor's Hooks settings.

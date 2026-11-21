@@ -36,6 +36,38 @@ to the target project root, or to `~` for user scope.
    line of each installed agent to the chosen value (see [Models](#models)).
    Change nothing else in the copied files; their frontmatter is otherwise
    already in the format Claude Code expects.
+5. **Offer the context hooks.** Explain that `factory-build` can hand off to
+   a fresh orchestrator before its context fills, and that the hooks make this
+   precise: after each tool call they read the session's token usage and warn
+   the orchestrator at `handoff_at_percent` (`config.md`, default 70), point it
+   back to `build-state.md` after a compaction, and tell a cleared session that
+   a handoff is pending. They need `python3` on `PATH`. Ask whether to install
+   them. If yes:
+   - Copy `<factory>/.ai-factory/harnesses/claude/hooks/factory_context.py` to
+     `.claude/hooks/` (project) or `~/.claude/hooks/` (user). If a different
+     file is already there, ask before overwriting.
+   - Ask whether they use a 1M-token context model. If yes, append
+     ` --window 1000000` to both commands below.
+   - Merge these entries into `hooks` in `.claude/settings.json` (project) or
+     `~/.claude/settings.json` (user). Keep every existing key and hook, and
+     skip an entry whose command already runs `factory_context.py`. For user
+     scope, use `python3 ~/.claude/hooks/factory_context.py` as the command.
+
+     ```json
+     {
+       "hooks": {
+         "PostToolUse": [
+           { "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/factory_context.py" }] }
+         ],
+         "SessionStart": [
+           { "matcher": "startup|clear|compact", "hooks": [{ "type": "command", "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/factory_context.py" }] }
+         ]
+       }
+     }
+     ```
+
+   Without the hooks, handoff still works from the `handoff_after_rounds`
+   count.
 
 ## Models
 
@@ -50,4 +82,4 @@ reinstall keeps the current value unless the user picks another one.
 
 ## Verify
 
-List the installed agents with `/agents` and confirm all six `factory-*` agents appear. Confirm the four `factory-*` skills appear in the skills list. New files can need a session restart before they show up.
+List the installed agents with `/agents` and confirm all six `factory-*` agents appear. Confirm the four `factory-*` skills appear in the skills list. New files can need a session restart before they show up. If you installed the context hooks, run `/hooks` and confirm the `PostToolUse` and `SessionStart` entries for `factory_context.py`.
