@@ -186,6 +186,8 @@ The skill creates an epic branch `factory/<slug>` from your base branch, then ru
 
 **Quality gate: merge the task PR.** Merging is your sign-off: the task becomes `done`, its worktree is removed, and tasks that depended on it become ready and branch from the updated epic branch. Merge conflicts are reported to you, never resolved automatically, and nothing is ever pushed to your default branch.
 
+**Long builds and context.** The orchestrator saves `.ai-factory/projects/<slug>/build-state.md` at every checkpoint. After `handoff_after_rounds` Review + Verify rounds, or when you ask, it finishes the steps in flight, marks the state `handoff-pending` and asks you to clear the conversation (`/clear` in Claude Code, a new chat in Cursor, `/new` in OpenCode) and say *resume the factory build for `<slug>`*. The fresh orchestrator rebuilds its picture from the state file and task files and carries on.
+
 For low-level or custom orchestration you can invoke the `factory-coder`, `factory-reviewer`, and `factory-verifier` subagents directly (see [Supported tools](#-supported-tools)); prefer driving work through `factory-build` so gates and parallelism stay consistent.
 
 ### 📦 Stage 4: Ship
@@ -240,6 +242,7 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
     task.md
     review.md
     verify.md
+    build-state.md                 # factory-build handoff state
     ci/
       factory-checks.yml           # GitHub Actions: runs config.md checks on every PR
   projects/                        # Work in progress (gitignored)
@@ -248,6 +251,7 @@ When a feature has shipped, use the [`factory-archive`](.ai-factory/harnesses/cl
       evaluations/
         00-design-evaluation.md    # Evaluator report (persisted by main agent)
       01-epic.md
+      build-state.md               # Orchestrator state for resume / handoff
       tasks/
         T001-<slug>.md
       reviews/
@@ -453,7 +457,7 @@ The `examples/oauth2/evaluations/00-design-evaluation.md` file demonstrates a fu
 
 ### `.ai-factory/config.md` — Project Configuration
 
-The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set. The `## Build` section sets `max_concurrent_tasks`, `max_iterations`, `worktree_dir` and `base_branch` for the build stage. If you installed `factory-checks.yml`, keep its commands in sync with this file.
+The Verifier reads command configurations from here. If a command is missing or set to `none`, that check is skipped. At minimum, `test_command` and `lint_command` should be set. The `## Build` section sets `max_concurrent_tasks`, `max_iterations`, `worktree_dir`, `base_branch`, `handoff_after_rounds` and `handoff_at_percent` for the build stage. If you installed `factory-checks.yml`, keep its commands in sync with this file.
 
 ### `.ai-factory/templates/ci/factory-checks.yml` — CI check
 
